@@ -23,12 +23,25 @@ defmodule ChatRoomsWeb.MessagesForm do
         for={@form}
         id="messages-form"
         phx-submit="message-submit"
-        phx-hook="Form"
+        phx-change="validate"
         phx-target={@myself}
       >
-        <.input field={@form[:username]} type="text" id="name" placeholder="Your name" autofocus />
+        <.input
+          label="Username"
+          field={@form[:username]}
+          type="text"
+          placeholder="Your name"
+          phx-debounce="750"
+          autofocus
+        />
 
-        <.input field={@form[:text]} type="text" id="msg" placeholder="Your message" />
+        <.input
+          label="Message"
+          field={@form[:text]}
+          type="text"
+          placeholder="Your message"
+          phx-debounce="750"
+        />
 
         <input
           field={@room.id}
@@ -38,59 +51,31 @@ defmodule ChatRoomsWeb.MessagesForm do
           value={@room.id}
         />
 
-        <button type="submit" class="...">Send</button>
+        <.button type="submit" class="..." phx-disable-with="Sending...">Send</.button>
       </.form>
     </div>
     """
   end
 
-  # def handle_event("message-change", params, socket) do
-  #  IO.inspect(params)
+  def handle_event("validate", %{"message" => params}, socket) do
+    form =
+      %Message{} |> Chatrooms.change_message(params) |> to_form_with_validation()
 
-  #  new_form =
-  #    %Message{}
-  #    |> Chatrooms.change_message(params)
-  #    |> to_form()
-
-  #  {:noreply, socket |> assign(form: new_form)}
-  # end
+    {:noreply, assign(socket, :form, form)}
+  end
 
   def handle_event("message-submit", %{"message" => inputs}, socket) do
     IO.inspect(inputs)
 
     case Chatrooms.create_message(inputs) do
       {:error, changeset} ->
-        IO.puts("Message error")
-        IO.inspect(changeset)
-        {:noreply, socket |> assign(form: changeset |> to_form())}
+        {:noreply, socket |> assign(form: changeset |> to_form_with_validation())}
 
       {:ok, _message} ->
-        IO.puts("Message submitted")
         {:noreply, socket |> assign_empty_message_form()}
     end
-
-    {:noreply, socket}
   end
 
-  # def handle_event("message-submit", %{"message" => params}, socket) do
-  # case Message.create_message(params) do
-  #  {:error, changeset} ->
-  #    {:noreply, assign(socket, form: changeset |> #to_form())}
-
-  #  :ok ->
-  #    form =
-  #      %Message{} |> Message.changeset(%{message: "", name: ""}) |> to_form()
-
-  #    {:noreply, assign(socket, form: form)}
-  # end
-  # end
-
-  # def handle_event("message-changed", %{"message" => params}, socket) do
-  # new_form =
-  #  %Message{}
-  #  |> Message.changeset(%{message: params[:message], name: params[:name]})
-  #  |> to_form()
-
-  # {:noreply, assign(socket, form: new_form)}
-  # end
+  defp to_form_with_validation(changeset),
+    do: changeset |> Map.put(:action, :validate) |> to_form()
 end

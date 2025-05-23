@@ -1,4 +1,5 @@
 defmodule ChatRoomsWeb.ChatroomLive do
+  alias ChatRoomsWeb.RoomsForm
   alias ChatRoomsWeb.MessagesComponent
   use ChatRoomsWeb, :live_view
 
@@ -33,7 +34,8 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
   def render(%{live_action: :show} = assigns) do
     ~H"""
-    <.live_component module={RoomsComponent} id="rooms-list" rooms={@rooms} />
+    <.live_component module={RoomsComponent} id="rooms-list" rooms={@rooms} room={@room} />
+    <.live_component module={RoomsForm} id="rooms-form" />
     <.live_component module={MessagesComponent} id="messages-display" room={@room} />
 
     <.live_component module={MessagesForm} id="messages-form" room={@room} />

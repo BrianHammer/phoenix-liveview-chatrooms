@@ -15,6 +15,8 @@ defmodule ChatRooms.Chatrooms.Message do
     message
     |> cast(attrs, [:username, :text, :room_id])
     |> validate_required([:username, :text, :room_id])
+    |> validate_length(:username, min: 4, max: 20)
+    |> validate_length(:text, min: 2, max: 150)
     |> assoc_constraint(:room)
   end
 end
