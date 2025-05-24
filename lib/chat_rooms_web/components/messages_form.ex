@@ -6,6 +6,8 @@ defmodule ChatRoomsWeb.MessagesForm do
   import ChatRoomsWeb.CoreComponents
 
   def mount(socket) do
+    IO.inspect((%Message{} |> Chatrooms.change_message(%{}) |> to_form())[:room_id].name)
+
     {:ok,
      socket
      |> assign_empty_message_form()}
@@ -44,11 +46,11 @@ defmodule ChatRoomsWeb.MessagesForm do
         />
 
         <input
-          field={@room.id}
+          field={@room_id}
           id="hidden-room-id"
           type="hidden"
           name={@form[:room_id].name}
-          value={@room.id}
+          value={@room_id}
         />
 
         <.button type="submit" class="..." phx-disable-with="Sending...">Send</.button>
@@ -64,8 +66,11 @@ defmodule ChatRoomsWeb.MessagesForm do
     {:noreply, assign(socket, :form, form)}
   end
 
-  def handle_event("message-submit", %{"message" => inputs}, socket) do
-    IO.inspect(inputs)
+  def handle_event("message-submit", %{"message" => inputs} = params, socket) do
+    IO.inspect("Changeset using inputs..........................")
+    IO.inspect(%Message{} |> Chatrooms.change_message(inputs))
+    IO.inspect("Changeset using nesting params..........................")
+    IO.inspect(%Message{} |> Chatrooms.change_message(params))
 
     case Chatrooms.create_message(inputs) do
       {:error, changeset} ->

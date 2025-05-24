@@ -17,7 +17,7 @@ defmodule ChatRooms.Application do
       # Start a worker by calling: ChatRooms.Worker.start_link(arg)
       # {ChatRooms.Worker, arg},
       # Start to serve requests, typically the last entry
-      ChatRoomsWeb.Endpoint
+      ChatRoomsWeb.Endpoint,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

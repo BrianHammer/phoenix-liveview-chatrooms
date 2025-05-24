@@ -4,6 +4,7 @@ defmodule ChatRooms.Chatrooms do
   """
 
   import Ecto.Query, warn: false
+  alias Phoenix.PubSub
   alias ChatRooms.Chatrooms.MessageQuery
   alias ChatRooms.Chatrooms.RoomQuery
   alias ChatRooms.Repo
@@ -65,6 +66,7 @@ defmodule ChatRooms.Chatrooms do
     %Room{}
     |> Room.changeset(attrs)
     |> Repo.insert()
+    |> notify_rooms(:room_created)
   end
 
   @doc """
@@ -83,6 +85,7 @@ defmodule ChatRooms.Chatrooms do
     room
     |> Room.changeset(attrs)
     |> Repo.update()
+    |> notify_rooms(:room_updated)
   end
 
   @doc """
@@ -99,6 +102,7 @@ defmodule ChatRooms.Chatrooms do
   """
   def delete_room(%Room{} = room) do
     Repo.delete(room)
+    |> notify_rooms(:room_deleted)
   end
 
   @doc """
@@ -168,6 +172,8 @@ defmodule ChatRooms.Chatrooms do
     %Message{}
     |> Message.changeset(attrs)
     |> Repo.insert()
+
+    # |> notify_messages(attrs.room_id, :message_created)
   end
 
   @doc """
@@ -186,6 +192,7 @@ defmodule ChatRooms.Chatrooms do
     message
     |> Message.changeset(attrs)
     |> Repo.update()
+    |> notify_messages(attrs.room_id, :message_updated)
   end
 
   @doc """
@@ -202,6 +209,7 @@ defmodule ChatRooms.Chatrooms do
   """
   def delete_message(%Message{} = message) do
     Repo.delete(message)
+    |> notify_messages(message.room_id, :message_deleted)
   end
 
   @doc """
@@ -216,4 +224,32 @@ defmodule ChatRooms.Chatrooms do
   def change_message(%Message{} = message, attrs \\ %{}) do
     Message.changeset(message, attrs)
   end
+
+  ##########################################################
+  ## SUBSUB
+  ##########################################################
+
+  def subscribe_rooms() do
+    PubSub.subscribe(ChatRooms.PubSub, "rooms")
+  end
+
+  def notify_rooms({:ok, message}, event) do
+    PubSub.broadcast(ChatRooms.PubSub, "rooms", {event, message})
+  end
+
+  def notify_rooms({:error, reason}, _event), do: {:error, reason}
+
+  def subscribe_messages(room_id) do
+    PubSub.subscribe(ChatRooms.PubSub, "room-messages:#{room_id}")
+  end
+
+  def notify_messages({:ok, %{room_id: room_id} = message}, event) do
+    PubSub.broadcast(
+      ChatRooms.PubSub,
+      "room-messages:#{room_id}",
+      {event, message}
+    )
+  end
+
+  def notify_messages({:error, reason}, _room_id, _event), do: {:error, reason}
 end
