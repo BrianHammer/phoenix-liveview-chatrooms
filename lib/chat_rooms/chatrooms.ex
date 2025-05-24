@@ -172,8 +172,7 @@ defmodule ChatRooms.Chatrooms do
     %Message{}
     |> Message.changeset(attrs)
     |> Repo.insert()
-
-    # |> notify_messages(attrs.room_id, :message_created)
+    |> notify_messages(:message_created)
   end
 
   @doc """
@@ -192,7 +191,7 @@ defmodule ChatRooms.Chatrooms do
     message
     |> Message.changeset(attrs)
     |> Repo.update()
-    |> notify_messages(attrs.room_id, :message_updated)
+    |> notify_messages(:message_updated)
   end
 
   @doc """
@@ -209,7 +208,7 @@ defmodule ChatRooms.Chatrooms do
   """
   def delete_message(%Message{} = message) do
     Repo.delete(message)
-    |> notify_messages(message.room_id, :message_deleted)
+    |> notify_messages(:message_deleted)
   end
 
   @doc """
@@ -249,7 +248,8 @@ defmodule ChatRooms.Chatrooms do
       "room-messages:#{room_id}",
       {event, message}
     )
+    # This returns {:ok, messages}
   end
 
-  def notify_messages({:error, reason}, _room_id, _event), do: {:error, reason}
+  def notify_messages({:error, reason}, _event), do: {:error, reason}
 end

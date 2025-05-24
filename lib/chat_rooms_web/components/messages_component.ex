@@ -3,7 +3,6 @@ defmodule ChatRoomsWeb.MessagesComponent do
   use Phoenix.LiveComponent
 
   def mount(socket) do
-    IO.inspect(socket)
 
     {:ok, socket}
   end

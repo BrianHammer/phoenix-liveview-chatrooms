@@ -6,7 +6,6 @@ defmodule ChatRoomsWeb.MessagesForm do
   import ChatRoomsWeb.CoreComponents
 
   def mount(socket) do
-    IO.inspect((%Message{} |> Chatrooms.change_message(%{}) |> to_form())[:room_id].name)
 
     {:ok,
      socket
@@ -45,13 +44,7 @@ defmodule ChatRoomsWeb.MessagesForm do
           phx-debounce="750"
         />
 
-        <input
-          field={@room_id}
-          id="hidden-room-id"
-          type="hidden"
-          name={@form[:room_id].name}
-          value={@room_id}
-        />
+        <input id="hidden-room-id" type="hidden" name="message[room_id]" value={@room_id} />
 
         <.button type="submit" class="..." phx-disable-with="Sending...">Send</.button>
       </.form>
@@ -67,11 +60,6 @@ defmodule ChatRoomsWeb.MessagesForm do
   end
 
   def handle_event("message-submit", %{"message" => inputs} = params, socket) do
-    IO.inspect("Changeset using inputs..........................")
-    IO.inspect(%Message{} |> Chatrooms.change_message(inputs))
-    IO.inspect("Changeset using nesting params..........................")
-    IO.inspect(%Message{} |> Chatrooms.change_message(params))
-
     case Chatrooms.create_message(inputs) do
       {:error, changeset} ->
         {:noreply, socket |> assign(form: changeset |> to_form_with_validation())}
