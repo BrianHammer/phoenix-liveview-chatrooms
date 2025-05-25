@@ -1,39 +1,58 @@
 defmodule ChatRooms.PubSubConnectorRooms do
   use GenServer
-
+  alias Phoenix.LiveView
   alias ChatRooms.Chatrooms
   # alias Phoenix.PubSub
 
-  ############################################
-  ## CLIENT
-  ############################################
+  #################################################
+  ## LIVEVIEW PIPE
+  #################################################
+  def maybe_subscribe(%{root_pid: _pid, assigns: %{myself: _cid} = _assigns} = socket) do
+    IO.puts("Ran connecting...")
 
-  def start_link(live_component_pid) do
-    IO.puts("GENSERVER CREATED")
-    GenServer.start_link(__MODULE__, live_component_pid)
+    if LiveView.connected?(socket),
+      do: socket |> start_link()
+
+    socket
+  end
+
+  ############################################
+  ## "CLIENT"
+  ############################################
+  # def start_link(pid, cid) do
+  #  IO.puts("GENSERVER CREATED")
+  #  GenServer.start_link(__MODULE__, {pid, cid})
+  # end
+
+  def start_link(%{root_pid: pid, assigns: %{myself: cid}} = socket) do
+    GenServer.start_link(__MODULE__, {pid, cid, socket})
   end
 
   ############################################
   ## SERVER
   ############################################
 
-  def init(live_component_pid) do
-    Process.monitor(live_component_pid)
+  def init({pid, cid, socket}) do
+    IO.puts("Ran init")
+    {:ok, {pid, cid, socket}, {:continue, :subscribe}}
+  end
+
+  def handle_continue(:subscribe, state) do
+    IO.puts("subscribed to room")
     Chatrooms.subscribe_rooms()
 
-    {:ok, live_component_pid}
+    {:noreply, state}
   end
 
   def handle_info({:DOWN, _ref, :process, pid, _reason}, pid) do
     {:stop, :normal, pid}
   end
 
-  def handle_info({_event, _message} = msg, live_component_pid) do
-    IO.puts("Message received in connector. Sending to livecomponent...")
-    IO.inspect(msg)
-    IO.puts("live_component_pid...")
-    IO.inspect(live_component_pid)
-    send(live_component_pid, msg)
-    {:noreply, live_component_pid}
+  def handle_info({_event, _message} = msg, {pid, cid, assigns}) do
+    IO.puts("HandleInfo called...")
+    # send(live_component_pid, msg)
+    new_assigns = assigns |> Map.put(:event, msg)
+    Phoenix.LiveView.send_update(pid, cid, new_assigns)
+    {:noreply, {pid, cid}}
   end
 end
