@@ -11,7 +11,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
     {
       :ok,
       socket
-      |> assign_rooms()
+      # |> assign_rooms()
       |> assign(room_id: room_id)
     }
   end
@@ -24,16 +24,15 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
   def render(%{live_action: :index} = assigns) do
     ~H"""
-    Select a room <.live_component module={RoomsComponent} id="rooms-list" rooms={@rooms} />
+    Select a room <.live_component module={RoomsComponent} id="rooms-list" />
     """
   end
 
   def render(%{live_action: :show} = assigns) do
     ~H"""
-    <.live_component module={RoomsComponent} id="rooms-list" rooms={@rooms} room_id={@room_id} />
+    <.live_component module={RoomsComponent} id="rooms-list" room_id={@room_id} />
     <.live_component module={RoomsForm} id="rooms-form" />
     <.live_component module={MessagesComponent} id="messages-display" room_id={@room_id} />
-
     <.live_component module={MessagesForm} id="messages-form" room_id={@room_id} />
     """
   end

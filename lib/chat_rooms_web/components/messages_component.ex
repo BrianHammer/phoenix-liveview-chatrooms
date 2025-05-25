@@ -3,7 +3,6 @@ defmodule ChatRoomsWeb.MessagesComponent do
   use Phoenix.LiveComponent
 
   def mount(socket) do
-
     {:ok, socket}
   end
 
@@ -11,15 +10,15 @@ defmodule ChatRoomsWeb.MessagesComponent do
     {:ok,
      socket
      |> assign(assigns)
-     |> assign_messages_from_room(room_id)
+     |> stream_messages_from_room(room_id)
      |> maybe_subscribe(room_id)}
   end
 
-  def assign_messages_from_room(socket, room_id) do
+  def stream_messages_from_room(socket, room_id) do
     messages = socket.assigns[:messages] || Chatrooms.list_all_messages_from_room(room_id)
 
     socket
-    |> assign(messages: messages)
+    |> stream(:messages, messages)
   end
 
   def maybe_subscribe(socket, room_id) do
@@ -29,11 +28,12 @@ defmodule ChatRoomsWeb.MessagesComponent do
 
   def render(assigns) do
     ~H"""
-    <ul class="p-4 border-black">
-      <%= for message <- @messages do %>
-        <li class="py-2 px-4 bg-red" id={"message-#{message.id}"}>
+    <ul class="p-4 border-black" id="messages-list">
+      <%= for {dom_id, message} <- @streams.messages do %>
+        <li class="py-2 px-4 bg-red" id={dom_id}>
           <b>{message.username}</b>
           <p>{message.text}</p>
+          <small>{dom_id}</small>
         </li>
       <% end %>
     </ul>
