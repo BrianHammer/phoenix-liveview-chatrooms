@@ -233,7 +233,11 @@ defmodule ChatRooms.Chatrooms do
   end
 
   def notify_rooms({:ok, message}, event) do
+    IO.puts("room notified. Message sent as handle_info to...")
+    IO.inspect({event, message})
     PubSub.broadcast(ChatRooms.PubSub, "rooms", {event, message})
+
+    {:ok, message}
   end
 
   def notify_rooms({:error, reason}, _event), do: {:error, reason}
@@ -248,8 +252,10 @@ defmodule ChatRooms.Chatrooms do
       "room-messages:#{room_id}",
       {event, message}
     )
+
     # This returns {:ok, messages}
   end
 
   def notify_messages({:error, reason}, _event), do: {:error, reason}
 end
+

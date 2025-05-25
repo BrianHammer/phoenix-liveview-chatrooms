@@ -6,7 +6,6 @@ defmodule ChatRoomsWeb.MessagesForm do
   import ChatRoomsWeb.CoreComponents
 
   def mount(socket) do
-
     {:ok,
      socket
      |> assign_empty_message_form()}
@@ -59,7 +58,7 @@ defmodule ChatRoomsWeb.MessagesForm do
     {:noreply, assign(socket, :form, form)}
   end
 
-  def handle_event("message-submit", %{"message" => inputs} = params, socket) do
+  def handle_event("message-submit", %{"message" => inputs}, socket) do
     case Chatrooms.create_message(inputs) do
       {:error, changeset} ->
         {:noreply, socket |> assign(form: changeset |> to_form_with_validation())}

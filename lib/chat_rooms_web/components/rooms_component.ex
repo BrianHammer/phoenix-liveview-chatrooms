@@ -1,18 +1,21 @@
 defmodule ChatRoomsWeb.RoomsComponent do
   use Phoenix.LiveComponent
 
+  alias ChatRooms.PubSubConnectorRooms
   alias ChatRooms.Chatrooms
 
   def mount(socket) do
-    {:ok, socket}
+    {:ok, socket |> maybe_subscribe()}
   end
 
   def update(assigns, socket) do
+    IO.puts("@MYSELF")
+    IO.puts(assigns[:myself])
+
     {:ok,
      socket
      |> assign(assigns)
-     |> stream_rooms()
-     |> maybe_subscribe()}
+     |> stream_rooms()}
   end
 
   def stream_rooms(socket) do
@@ -23,7 +26,7 @@ defmodule ChatRoomsWeb.RoomsComponent do
   end
 
   def maybe_subscribe(socket) do
-    if connected?(socket), do: Chatrooms.subscribe_rooms()
+    if connected?(socket), do: PubSubConnectorRooms.start_link(self())
 
     socket
   end
@@ -42,7 +45,9 @@ defmodule ChatRoomsWeb.RoomsComponent do
     """
   end
 
+  def handle_info({:room_created, room}, socket) do
+    IO.inspect("STREAMED UPDATE FROM THE CLIENT")
 
-
-  
+    {:noreply, socket |> stream_insert(:rooms, room, at: 0)}
+  end
 end
