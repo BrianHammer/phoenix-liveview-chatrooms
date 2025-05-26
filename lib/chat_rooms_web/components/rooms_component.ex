@@ -1,5 +1,6 @@
 defmodule ChatRoomsWeb.RoomsComponent do
   use Phoenix.Component
+  import ChatRoomsWeb.CoreComponents
 
   def render(assigns) do
     ~H"""
@@ -9,6 +10,9 @@ defmodule ChatRoomsWeb.RoomsComponent do
           <.link href={"/rooms/#{room.id}"}>
             {room.name} -- {dom_id}
           </.link>
+          <.button phx-click="delete-room" phx-value-id={room.id}>
+            Delete
+          </.button>
         </li>
       <% end %>
     </ul>
