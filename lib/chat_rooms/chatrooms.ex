@@ -244,6 +244,10 @@ defmodule ChatRooms.Chatrooms do
     PubSub.subscribe(ChatRooms.PubSub, "room-messages:#{room_id}")
   end
 
+  def unsubscribe_messages(room_id) do
+    PubSub.unsubscribe(ChatRooms.PubSub, "room-messages:#{room_id}")
+  end
+
   def notify_messages({:ok, %{room_id: room_id} = message}, event) do
     PubSub.broadcast(
       ChatRooms.PubSub,
