@@ -16,29 +16,39 @@ defmodule ChatRoomsWeb.ChatroomLive do
   # end
 
   def handle_params(%{"room_id" => room_id}, _uri, socket) do
-    if connected?(socket), do: IO.puts("Handling params from socket")
-
-    IO.puts("Handling params called...")
-
     {:noreply,
      socket
+     |> clear_messages()
      |> unsubscribe_from_current_messages()
      |> assign_room!(room_id)
      |> stream_messages(room_id)
      |> maybe_subscribe_messages(room_id)}
   end
 
-  def handle_params(p, _, socket) do
-    IO.inspect(p)
-    {:noreply, socket |> unsubscribe_from_current_messages()}
+  def handle_params(_p, _, socket) do
+    {:noreply,
+     socket
+     |> clear_messages()
+     |> unsubscribe_from_current_messages()
+     |> assign(room: nil)}
   end
 
-  def assign_room!(socket, room_id), do: socket |> assign(room: Chatrooms.get_room!(room_id))
+  def clear_messages(socket) do
+    socket
+    |> stream(:messages, [], reset: true)
+    |> stream(:messages, [])
+  end
 
-  defp stream_rooms(socket), do: socket |> stream(:rooms, Chatrooms.list_rooms(), reset: true)
+  def assign_room!(socket, room_id),
+    do: socket |> assign(room: Chatrooms.get_room!(room_id), reset: true)
 
-  defp stream_messages(socket, room_id),
-    do: socket |> stream(:messages, Chatrooms.list_all_messages_from_room(room_id))
+  defp stream_rooms(socket), do: socket |> stream(:rooms, Chatrooms.list_rooms()) |> IO.inspect()
+
+  defp stream_messages(socket, room_id) do
+    messages = Chatrooms.list_all_messages_from_room(room_id)
+    IO.inspect(messages, label: "Loading messages for room #{room_id}")
+    socket |> stream(:messages, messages, reset: true)
+  end
 
   defp maybe_subscribe_rooms(socket) do
     if socket |> connected?(), do: Chatrooms.subscribe_rooms()
@@ -46,7 +56,8 @@ defmodule ChatRoomsWeb.ChatroomLive do
     socket
   end
 
-  defp unsubscribe_from_current_messages(%{assigns: %{room: room}} = socket) do
+  defp unsubscribe_from_current_messages(%{assigns: %{room: room}} = socket)
+       when not is_nil(room) do
     Chatrooms.unsubscribe_messages(room.id)
 
     socket
@@ -61,10 +72,6 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
     socket
   end
-
-  ###################################
-  ## RENDERING
-  ###################################
 
   def render(%{live_action: :index} = assigns) do
     ~H"""
@@ -89,14 +96,6 @@ defmodule ChatRoomsWeb.ChatroomLive do
     <ul></ul>
     """
   end
-
-  #####################################
-  # ROOM STREAM
-  #####################################
-
-  ######################################
-  # EVENTS
-  ######################################
 
   def handle_event("delete-message", %{"id" => id}, socket) do
     {:ok, _} =

@@ -21,6 +21,8 @@ defmodule ChatRoomsWeb.Router do
 
     live "/rooms", ChatroomLive, :index
     live "/rooms/:room_id", ChatroomLive, :show
+
+    live "/testing/:id", LiveErrorTest
   end
 
   # Other scopes may use custom stacks.

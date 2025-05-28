@@ -69,7 +69,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
   defp message_header(assigns) do
     ~H"""
     <div class="p-4 mb-8 flex flex-row items-center justify-between gap-4 bg-gray-900 rounded-xl">
-      <h1 class="text-white text-xl font-bold">The Room Name</h1>
+      <h1 class="text-white text-xl font-bold">{@name}</h1>
       <p class="text-emerald-500 text-sm">1 Online</p>
     </div>
     """
@@ -108,10 +108,10 @@ defmodule ChatRoomsWeb.MessagesComponent do
     <div class="col-start-1 col-end-12 md:col-end-10 lg:col-end-8 rounded-lg">
       <div class="flex flex-row items-start gap-2">
         <div class="flex flex-col gap-1">
-          <div class="text-gray-300 font-semibold text-sm">Jane Doe</div>
+          <div class="text-gray-300 font-semibold text-sm">{@message.username}</div>
           <div class="relative text-sm bg-gray-700 py-2 px-4 shadow rounded-xl">
             <div class="text-gray-200">
-              Hey, how's it going? lkjs l j o jl kjj lkj   poj po k lk jl kj lkhjihjlkj h l k jl k jl kjjljj li j   yghgf hy
+              {@message.text}
             </div>
           </div>
         </div>
@@ -124,16 +124,11 @@ defmodule ChatRoomsWeb.MessagesComponent do
     ~H"""
     <div class="flex flex-col h-full overflow-x-auto mb-4">
       <div class="flex flex-col h-full">
-        <div class="grid grid-cols-12 gap-y-4">
-          <!-- Messages... -->
-
-          <!-- More messages here -->
-
-          <.message />
-          <.message />
-          <.message />
-          <.message />
-        </div>
+        <ul class="grid grid-cols-12 gap-y-4" id={"messages-list-#{@room.id}"} phx-update="stream">
+          <%= for {dom_id, message} <- @messages_stream do %>
+            <.message message={message} id={dom_id} />
+          <% end %>
+        </ul>
       </div>
     </div>
     """
@@ -218,8 +213,8 @@ defmodule ChatRoomsWeb.MessagesComponent do
       <!-- sidebar -->
     <!-- container -->
       <.message_container>
-        <.message_header />
-        <.message_list />
+        <.message_header name={@room.name} />
+        <.message_list room={@room} messages_stream={@messages_stream} />
         <.message_input_form />
       </.message_container>
     </div>
