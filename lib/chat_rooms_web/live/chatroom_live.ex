@@ -16,9 +16,10 @@ defmodule ChatRoomsWeb.ChatroomLive do
   # end
 
   def handle_params(%{"room_id" => room_id}, _uri, socket) do
+    IO.puts("INCORECT PATH CALL")
+
     {:noreply,
      socket
-     |> clear_messages()
      |> unsubscribe_from_current_messages()
      |> assign_room!(room_id)
      |> stream_messages(room_id)
@@ -28,7 +29,6 @@ defmodule ChatRoomsWeb.ChatroomLive do
   def handle_params(_p, _, socket) do
     {:noreply,
      socket
-     |> clear_messages()
      |> unsubscribe_from_current_messages()
      |> assign(room: nil)}
   end
@@ -36,17 +36,16 @@ defmodule ChatRoomsWeb.ChatroomLive do
   def clear_messages(socket) do
     socket
     |> stream(:messages, [], reset: true)
-    |> stream(:messages, [])
   end
 
+  @spec assign_room!(any(), any()) :: any()
   def assign_room!(socket, room_id),
     do: socket |> assign(room: Chatrooms.get_room!(room_id), reset: true)
 
-  defp stream_rooms(socket), do: socket |> stream(:rooms, Chatrooms.list_rooms()) |> IO.inspect()
+  defp stream_rooms(socket), do: socket |> stream(:rooms, Chatrooms.list_rooms())
 
   defp stream_messages(socket, room_id) do
     messages = Chatrooms.list_all_messages_from_room(room_id)
-    IO.inspect(messages, label: "Loading messages for room #{room_id}")
     socket |> stream(:messages, messages, reset: true)
   end
 
@@ -68,7 +67,10 @@ defmodule ChatRoomsWeb.ChatroomLive do
   end
 
   defp maybe_subscribe_messages(socket, room_id) do
-    if socket |> connected?(), do: Chatrooms.subscribe_messages(room_id)
+    if socket |> connected?() do
+      Chatrooms.unsubscribe_messages(room_id)
+      Chatrooms.subscribe_messages(room_id)
+    end
 
     socket
   end

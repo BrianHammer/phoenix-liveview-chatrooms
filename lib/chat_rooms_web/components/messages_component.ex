@@ -105,7 +105,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
 
   def message(assigns) do
     ~H"""
-    <div class="col-start-1 col-end-12 md:col-end-10 lg:col-end-8 rounded-lg">
+    <div id={@id} class="col-start-1 col-end-12 md:col-end-10 lg:col-end-8 rounded-lg">
       <div class="flex flex-row items-start gap-2">
         <div class="flex flex-col gap-1">
           <div class="text-gray-300 font-semibold text-sm">{@message.username}</div>
@@ -124,7 +124,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
     ~H"""
     <div class="flex flex-col h-full overflow-x-auto mb-4">
       <div class="flex flex-col h-full">
-        <ul class="grid grid-cols-12 gap-y-4" id={"messages-list-#{@room.id}"} phx-update="stream">
+        <ul class="grid grid-cols-12 gap-y-4" id="messages-list" phx-update="stream">
           <%= for {dom_id, message} <- @messages_stream do %>
             <.message message={message} id={dom_id} />
           <% end %>

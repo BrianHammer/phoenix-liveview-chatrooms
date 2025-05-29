@@ -16,7 +16,84 @@ defmodule ChatRoomsWeb.MessagesForm do
       socket
       |> assign(form: %Message{} |> Chatrooms.change_message(%{}) |> to_form())
 
+  defp clear_message_keep_username_form(socket, %{username: username} = _changeset),
+    do:
+      socket
+      |> assign(form: %Message{} |> Chatrooms.change_message(%{username: username}) |> to_form())
+
+  @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
+    ~H"""
+    <div>
+      <.form
+        for={@form}
+        id="messages-form"
+        phx-submit="message-submit"
+        phx-change="validate"
+        phx-target={@myself}
+        class="flex flex-row gap-4 items-center px-4 py-2 rounded-xl bg-gray-700 w-full "
+      >
+        <input id="hidden-room-id" type="hidden" name="message[room_id]" value={@room_id} />
+
+        <div class="flex flex-col md:flex-row gap-4 flex-grow">
+          <div class="flex-grow md:w-96 relative">
+            <input
+              type="text"
+              name={@form[:username].name}
+              id={@form[:username].id}
+              value={Phoenix.HTML.Form.input_value(@form, :username)}
+              phx-debounce="750"
+              autofocus
+              placeholder="Username"
+              class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:username].errors != [], do: "border-red-500 border-2 focus:border-red-500", else: "border-gray-500 focus:border-indigo-300"}"}
+            />
+            <span class="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400">
+              <Heroicons.icon name="user-circle" type="outline" class="w-6 h-6" />
+            </span>
+            <%= if @form[:username].errors != [] do %>
+              <div class="absolute -top-4 left-0 text-xs text-gray-900 bg-red-500 px-2 py-[1px] rounded-xl font-medium">
+                <%= for error <- @form[:username].errors do %>
+                  <span class="">{translate_error(error)}</span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="flex-grow relative w-full">
+            <input
+              type="text"
+              name={@form[:text].name}
+              id={@form[:text].id}
+              value={Phoenix.HTML.Form.input_value(@form, :text)}
+              placeholder="Type your message here..."
+              phx-debounce="750"
+              class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:text].errors != [], do: "border-red-500 focus:border-red-500", else: "border-gray-500 focus:border-indigo-300"}"}
+            />
+            <span class="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400">
+              <Heroicons.icon name="chat-bubble-bottom-center-text" type="outline" class="w-6 h-6" />
+            </span>
+            <%= if @form[:text].errors != [] do %>
+              <div class="absolute -top-4 left-0 text-xs text-gray-900 bg-red-500 px-2 py-[1px] rounded-xl font-medium">
+                <%= for error <- @form[:text].errors do %>
+                  <span class="">{translate_error(error)}</span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <button class=" flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 rounded-xl text-white px-4 py-2 flex-shrink-0">
+          <span>Send</span>
+          <span class="ml-2">
+            <Heroicons.icon name="paper-airplane" type="outline" class="w-6 h-6" />
+          </span>
+        </button>
+      </.form>
+    </div>
+    """
+  end
+
+  def render2(assigns) do
     ~H"""
     <div>
       <.form
@@ -63,8 +140,8 @@ defmodule ChatRoomsWeb.MessagesForm do
       {:error, changeset} ->
         {:noreply, socket |> assign(form: changeset |> to_form_with_validation())}
 
-      {:ok, _message} ->
-        {:noreply, socket |> assign_empty_message_form()}
+      {:ok, changeset} ->
+        {:noreply, socket |> clear_message_keep_username_form(changeset)}
     end
   end
 

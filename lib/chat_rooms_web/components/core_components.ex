@@ -388,6 +388,7 @@ defmodule ChatRoomsWeb.CoreComponents do
     """
   end
 
+
   @doc """
   Renders a label.
   """

@@ -10,7 +10,8 @@ defmodule ChatRooms.Chatrooms.MessageQuery do
 
   def from_room(query, room_id) do
     from q in query,
-      where: q.room_id == ^room_id
+      where: q.room_id == ^room_id,
+      order_by: q.inserted_at
   end
 
   def from_username(query, username) do
