@@ -45,7 +45,7 @@ defmodule ChatRoomsWeb.MessagesForm do
               phx-debounce="750"
               autofocus
               placeholder="Username"
-              class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:username].errors != [], do: "border-red-500 border-2 focus:border-red-500", else: "border-gray-500 focus:border-indigo-300"}"}
+              class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:username].errors != [], do: "border-red-500 border-2 focus:border-red-500"}"}
             />
             <span class="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400">
               <Heroicons.icon name="user-circle" type="outline" class="w-6 h-6" />
@@ -67,7 +67,7 @@ defmodule ChatRoomsWeb.MessagesForm do
               value={Phoenix.HTML.Form.input_value(@form, :text)}
               placeholder="Type your message here..."
               phx-debounce="750"
-              class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:text].errors != [], do: "border-red-500 focus:border-red-500", else: "border-gray-500 focus:border-indigo-300"}"}
+              class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:text].errors != [], do: "border-red-500 focus:border-red-500"}"}
             />
             <span class="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400">
               <Heroicons.icon name="chat-bubble-bottom-center-text" type="outline" class="w-6 h-6" />

@@ -1,11 +1,13 @@
 defmodule ChatRoomsWeb.RoomsComponent do
   use Phoenix.LiveComponent
   import ChatRoomsWeb.CoreComponents
+  alias Phoenix.LiveView.JS
+  alias ChatRoomsWeb.RoomsForm
   alias ChatRooms.Chatrooms
 
   defp room_button(assigns) do
     ~H"""
-    <div class="overflow-y-auto overflow-x-auto">
+    <li id={@id} class="overflow-y-auto overflow-x-auto">
       <div class="flex items-center px-4 py-3 cursor-ptr">
         <div class="relative">
           <img
@@ -17,9 +19,7 @@ defmodule ChatRoomsWeb.RoomsComponent do
           </div>
         </div>
         <div class="ml-3 flex flex-col">
-          <.link class="font-bold text-white-700 hover:text-white" patch={"/rooms/#{@room.id}"}>
-            {@room.name}
-          </.link>
+          <.custom_room_link room={@room} />
           <div class="flex flex-row items-center gap-2 text-sm text-gray-500 font-medium">
             <button
               phx-target={@myself}
@@ -42,23 +42,55 @@ defmodule ChatRoomsWeb.RoomsComponent do
         </div>
       </div>
       <!-- More user list items here -->
-    </div>
+    </li>
+    """
+  end
+
+  defp js_hide_sidebar_on_mobile() do
+    JS.add_class("hidden", to: "#sidebar")
+  end
+
+  # I use this so that closing the sidebar works only on mobile screens...
+  def custom_room_link(%{room: room} = assigns) do
+    ~H"""
+    <!-- This link hides the sidebar -->
+    <.link
+      phx-click={js_hide_sidebar_on_mobile()}
+      class="block md:hidden font-bold text-white-700 hover:text-white"
+      patch={"/rooms/#{@room.id}"}
+    >
+      {@room.name}
+    </.link>
+    <!-- This link does not hide the sidebar -->
+    <.link
+      class="hidden md:block font-bold text-white-700 hover:text-white"
+      patch={"/rooms/#{@room.id}"}
+    >
+      {@room.name}
+    </.link>
     """
   end
 
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col flex-shrink-0 w-64 bg-gray-900 text-gray-300">
-      <div class="flex flex-col items-center justify-center h-20 border-b border-gray-800">
-        <h1 class="text-xl font-bold">Chat Rooms</h1>
+    <div
+      id="sidebar"
+      class="z-10 w-full h-full absolute md:static md:w-64 hidden md:block flex flex-col flex-shrink-0 bg-gray-900 text-gray-300"
+    >
+      <button class="md:hidden" phx-click={js_hide_sidebar_on_mobile()}>
+        <Heroicons.icon name="x-mark" class="w-8 h-8 relative top-5 left-5" />
+      </button>
+
+      <div class="flex flex-col items-center justify-center  border-b border-gray-800 p-4">
+        <h1 class="text-3xl font-bold">Chat Rooms</h1>
         <button>Create New</button>
+
+        <.live_component module={RoomsForm} id="room-form-sidebar" />
       </div>
 
       <ul id="rooms-sidebar-list" phx-update="stream">
         <%= for {dom_id, room} <- @rooms_stream do %>
-          <li id={dom_id}>
-            <.room_button myself={@myself} room={room} />
-          </li>
+          <.room_button myself={@myself} room={room} id={dom_id} />
         <% end %>
       </ul>
     </div>

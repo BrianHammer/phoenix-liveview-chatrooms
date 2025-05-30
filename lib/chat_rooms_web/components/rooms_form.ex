@@ -25,20 +25,38 @@ defmodule ChatRoomsWeb.RoomsForm do
         phx-submit="room-submit"
         phx-change="validate"
         phx-target={@myself}
+        class="flex flex-col gap-4 p-4"
       >
-        <.input
-          label="name"
-          field={@form[:name]}
-          type="text"
-          placeholder="The name of the new room"
-          phx-debounce="750"
-        />
-
-        <.button type="submit" class="..." phx-disable-with="Creating...">Create Room</.button>
+        <div class="flex-grow relative w-full">
+          <input
+            type="text"
+            name={@form[:name].name}
+            id={@form[:name].id}
+            value={Phoenix.HTML.Form.input_value(@form, :name)}
+            placeholder="New room name..."
+            phx-debounce="750"
+            class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:name].errors != [], do: "border-red-500 focus:border-red-500"}"}
+          />
+          <span class="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400">
+            <Heroicons.icon name="user-group" type="outline" class="w-6 h-6" />
+          </span>
+          <%= if @form[:name].errors != [] do %>
+            <div class="absolute -top-4 left-0 text-xs text-gray-900 bg-red-500 px-2 py-[1px] rounded-xl font-medium">
+              <%= for error <- @form[:name].errors do %>
+                <span class="">{translate_error(error)}</span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <.button class="bg-red-500" type="submit" class="..." phx-disable-with="Creating...">
+          Create Room
+        </.button>
       </.form>
     </div>
     """
   end
+
+  
 
   def handle_event("validate", %{"room" => params}, socket) do
     form =
@@ -48,13 +66,14 @@ defmodule ChatRoomsWeb.RoomsForm do
   end
 
   def handle_event("room-submit", %{"room" => input}, socket) do
-
     case Chatrooms.create_room(input) do
       {:error, changeset} ->
-        {:noreply, socket |> assign(form: changeset |> to_form_with_validation())}
+        {:noreply,
+         socket
+         |> assign(form: changeset |> to_form_with_validation())}
 
-      {:ok, _message} ->
-        {:noreply, socket |> assign_empty_room_form()}
+      {:ok, room} ->
+        {:noreply, socket |> assign_empty_room_form() |> push_patch(to: "/rooms/#{room.id}")}
     end
   end
 

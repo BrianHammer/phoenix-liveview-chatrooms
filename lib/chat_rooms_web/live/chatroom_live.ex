@@ -16,11 +16,11 @@ defmodule ChatRoomsWeb.ChatroomLive do
   # end
 
   def handle_params(%{"room_id" => room_id}, _uri, socket) do
-    IO.puts("INCORECT PATH CALL")
-
     {:noreply,
      socket
      |> unsubscribe_from_current_messages()
+     # Remove this later
+     # |> stream_rooms()
      |> assign_room!(room_id)
      |> stream_messages(room_id)
      |> maybe_subscribe_messages(room_id)}
@@ -42,7 +42,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
   def assign_room!(socket, room_id),
     do: socket |> assign(room: Chatrooms.get_room!(room_id), reset: true)
 
-  defp stream_rooms(socket), do: socket |> stream(:rooms, Chatrooms.list_rooms())
+  defp stream_rooms(socket), do: socket |> stream(:rooms, Chatrooms.list_rooms(), reset: true)
 
   defp stream_messages(socket, room_id) do
     messages = Chatrooms.list_all_messages_from_room(room_id)
@@ -77,13 +77,16 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
   def render(%{live_action: :index} = assigns) do
     ~H"""
-    <.live_component module={RoomsComponent} id="room-sidebar" rooms_stream={@streams.rooms} />
+    <div class="flex flex-row h-screen antialiased text-gray-800 w-screen">
+      <.live_component module={RoomsComponent} id="room-sidebar" rooms_stream={@streams.rooms} />
+      <.live_component module={MessagesComponent} id="messages-page" />
+    </div>
     """
   end
 
   def render(%{live_action: :show} = assigns) do
     ~H"""
-    <div class="flex flex-row h-screen antialiased text-gray-800 w-full">
+    <div class="flex flex-row h-screen antialiased text-gray-800 w-screen">
       <.live_component module={RoomsComponent} id="room-sidebar" rooms_stream={@streams.rooms} />
       <.live_component
         module={MessagesComponent}
@@ -92,25 +95,14 @@ defmodule ChatRoomsWeb.ChatroomLive do
         room={@room}
       />
     </div>
-
-    <.live_component module={MessagesForm} id="messages-form" room_id={@room.id} />
-    <.live_component module={RoomsForm} id="rooms-form" />
     <ul></ul>
     """
-  end
-
-  def handle_event("delete-message", %{"id" => id}, socket) do
-    {:ok, _} =
-      Chatrooms.get_message!(id)
-      |> Chatrooms.delete_message()
-
-    {:noreply, socket}
   end
 
   defp redirect_room_upon_deleting(%{assigns: %{room: room}} = socket, deleted_room)
        when room.id == deleted_room.id do
     socket
-    |> push_patch(to: ~p"/rooms")
+    |> push_navigate(to: ~p"/rooms")
     |> put_flash(:error, "#{room.name} has been deleted.")
   end
 
@@ -137,7 +129,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
   # message handling
 
   def handle_info({:message_created, message}, socket) do
-    {:noreply, socket |> stream_insert(:messages, message, at: 0)}
+    {:noreply, socket |> stream_insert(:messages, message, at: -1)}
   end
 
   def handle_info({:message_deleted, message}, socket) do
