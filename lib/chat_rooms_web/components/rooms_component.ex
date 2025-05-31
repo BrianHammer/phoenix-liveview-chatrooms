@@ -19,16 +19,22 @@ defmodule ChatRoomsWeb.RoomsComponent do
           </div>
         </div>
         <div class="ml-3 flex flex-col">
-          <.custom_room_link room={@room} />
+          <div id={@id |> get_text_id_from_id()} class="">
+            <.custom_room_link room={@room} />
+          </div>
+
+          <div id={@id |> get_input_id_from_id()} class="hidden">
+            <.room_edit_form room={@room} myself={@myself} dom_id={@id} />
+          </div>
+
           <div class="flex flex-row items-center gap-2 text-sm text-gray-500 font-medium">
             <button
+              id={get_edit_button_id_from_id(@id)}
               phx-target={@myself}
-              phx-click="edit-room"
-              phx-target-id={@room.id}
-              class="hover:text-gray-300 "
-              href="#"
+              phx-click={js_toggle_edit_room_form(@id)}
+              class="text-gray-500 hover:text-blue-300"
             >
-              Edit
+              <Heroicons.icon name="pencil-square" class="w-54 h-5" />
             </button>
             <button
               class="hover:text-gray-300"
@@ -36,7 +42,7 @@ defmodule ChatRoomsWeb.RoomsComponent do
               phx-click="delete-room"
               phx-value-id={@room.id}
             >
-              Delete
+              <Heroicons.icon name="trash" class="w-5 h-5 text-gray-500 hover:text-red-500" />
             </button>
           </div>
         </div>
@@ -44,6 +50,39 @@ defmodule ChatRoomsWeb.RoomsComponent do
       <!-- More user list items here -->
     </li>
     """
+  end
+
+  defp room_edit_form(assigns) do
+    ~H"""
+    <.simple_form
+      :let={f}
+      for={@room |> Chatrooms.change_room(%{})}
+      phx-submit="update-room"
+      phx-target={@myself}
+      class="flex items-center max-w-full flex-row gap-2 "
+    >
+      <input type="hidden" name="room_id" value={@room.id} />
+      <input
+        type="text"
+        name="name"
+        value={@room.name}
+        class="bg-gray-700 text-gray-300 flex-grow md:w-20 rounded-xl p-1"
+      />
+      <.button class="" phx-disable-with="Editing..." phx-click={js_toggle_edit_room_form(@dom_id)}>
+        Edit
+      </.button>
+    </.simple_form>
+    """
+  end
+
+  defp get_text_id_from_id(id), do: "#{id}-text"
+  defp get_input_id_from_id(id), do: "#{id}-input"
+  defp get_edit_button_id_from_id(id), do: "#{id}-edit-button"
+
+  defp js_toggle_edit_room_form(id) do
+    JS.toggle(to: "##{id |> get_text_id_from_id()}")
+    |> JS.toggle(to: "##{id |> get_input_id_from_id()}")
+    |> JS.toggle_class("text-purple-500", to: "##{id |> get_edit_button_id_from_id}")
   end
 
   defp js_hide_sidebar_on_mobile() do
@@ -95,6 +134,20 @@ defmodule ChatRoomsWeb.RoomsComponent do
       </ul>
     </div>
     """
+  end
+
+  def handle_event("update-room", params, socket) do
+    IO.inspect(params)
+
+    rooms = Chatrooms.get_room!(params["room_id"])
+
+    case rooms |> Chatrooms.update_room(params |> Map.put("id", params["room_id"])) do
+      {:ok, _room} ->
+        {:noreply, socket}
+
+      {:error, _message} ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("delete-room", %{"id" => id}, socket) do
