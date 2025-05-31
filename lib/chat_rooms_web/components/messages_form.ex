@@ -82,12 +82,15 @@ defmodule ChatRoomsWeb.MessagesForm do
           </div>
         </div>
 
-        <button class=" flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 rounded-xl text-white px-4 py-2 flex-shrink-0">
+        <.button
+          phx-disable-with="sending..."
+          class=" flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 rounded-xl text-white px-4 py-2 flex-shrink-0"
+        >
           <span>Send</span>
           <span class="ml-2">
             <Heroicons.icon name="paper-airplane" type="outline" class="w-6 h-6" />
           </span>
-        </button>
+        </.button>
       </.form>
     </div>
     """

@@ -8,7 +8,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
   alias ChatRoomsWeb.MessagesForm
 
   def mount(_p, _s, socket) do
-    {:ok, socket |> stream_rooms() |> maybe_subscribe_rooms()}
+    {:ok, socket |> stream_rooms() |> maybe_subscribe_rooms() |> assign_presense_id()}
   end
 
   # def handle_params(%{room_id: room_id}, _s, socket) do
@@ -60,6 +60,11 @@ defmodule ChatRoomsWeb.ChatroomLive do
     Chatrooms.unsubscribe_messages(room.id)
 
     socket
+  end
+
+  def assign_presense_id(socket) do
+    socket
+    |> assign(presense_id: UUID.uuid4() |> IO.inspect())
   end
 
   defp unsubscribe_from_current_messages(socket) do

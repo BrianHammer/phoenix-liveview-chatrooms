@@ -202,7 +202,7 @@ defmodule ChatRoomsWeb.CoreComponents do
   def simple_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 space-y-8 bg-white">
+      <div class="">
         {render_slot(@inner_block, f)}
         <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
           {render_slot(action, f)}
@@ -387,7 +387,6 @@ defmodule ChatRoomsWeb.CoreComponents do
     </div>
     """
   end
-
 
   @doc """
   Renders a label.

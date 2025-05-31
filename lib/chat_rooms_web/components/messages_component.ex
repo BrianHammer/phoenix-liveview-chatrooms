@@ -106,21 +106,71 @@ defmodule ChatRoomsWeb.MessagesComponent do
           <div class="flex flex-row gap-2 items-center">
             <div class="text-gray-300 font-semibold text-sm">{@message.username}</div>
             <span class="text-sm text-gray-400">{@message.inserted_at |> display_date()}</span>
+            <span :if={@message.updated_at != @message.inserted_at} class="text-xs text-gray-500">
+              Edited on {@message.updated_at |> display_date()}
+            </span>
           </div>
-          <div class="text-md bg-gray-700 py-2 px-4 shadow rounded-xl text-gray-200">
+          <div
+            id={get_text_id_from_dom_id(@id)}
+            class="text-md bg-gray-700 py-2 px-4 shadow rounded-xl text-gray-200 break-all"
+          >
             {@message.text}
+          </div>
+          <div id={get_edit_message_form_id_from_id(@id)} class="hidden">
+            <.message_edit_form dom_id={@id} message={@message} myself={@myself} />
           </div>
           <div class="flex flex-row gap-2 items-center font-semibold text-sm">
             <button phx-target={@myself} phx-value-id={@message.id} phx-click="delete-message">
               <Heroicons.icon name="trash" class="w-5 h-5 text-gray-500 hover:text-red-500" />
             </button>
-            <button>
-              <Heroicons.icon name="pencil-square" class="w-54 h-5 text-gray-500 hover:text-blue-300" />
+            <button
+              id={get_edit_button_id_from_id(@id)}
+              phx-target={@myself}
+              phx-value-id={@id}
+              phx-click={toggle_edit_message_form(@id)}
+              class="text-gray-500 hover:text-blue-300"
+            >
+              <Heroicons.icon name="pencil-square" class="w-54 h-5" />
             </button>
           </div>
         </div>
       </div>
     </div>
+    """
+  end
+
+  defp get_text_id_from_dom_id(id), do: "#{id}-text"
+  defp get_edit_message_form_id_from_id(id), do: "#{id}-edit-form"
+  defp get_edit_button_id_from_id(id), do: "#{id}-edit-button"
+
+  defp toggle_edit_message_form(id) do
+    JS.toggle(to: "##{id |> get_text_id_from_dom_id()}")
+    |> JS.toggle(to: "##{id |> get_edit_message_form_id_from_id()}")
+    |> JS.toggle_class("text-purple-500", to: "##{id |> get_edit_button_id_from_id()}")
+  end
+
+  defp message_edit_form(%{message: _room} = assigns) do
+    ~H"""
+    <.simple_form
+      :let={f}
+      for={@message |> Chatrooms.change_message(%{})}
+      phx-submit="update-message"
+      phx-target={@myself}
+      class="flex items-center max-w-full flex-row gap-2 "
+    >
+      <input type="hidden" name="username" value={@message.username} />
+      <input type="hidden" name="room_id" value={@message.room_id} />
+      <input type="hidden" name="message_id" value={@message.id} />
+      <input
+        type="text"
+        name="text"
+        value={@message.text}
+        class="bg-gray-700 text-gray-300 flex-grow min-w-50 rounded-xl overflow-x-auto"
+      />
+      <.button class="" phx-disable-with="Editing..." phx-click={toggle_edit_message_form(@dom_id)}>
+        Edit
+      </.button>
+    </.simple_form>
     """
   end
 
@@ -165,6 +215,20 @@ defmodule ChatRoomsWeb.MessagesComponent do
       </.message_container>
     </div>
     """
+  end
+
+  def handle_event("update-message", params, socket) do
+    IO.inspect(params)
+    IO.inspect(params["message_id"])
+    message = Chatrooms.get_message!(params["message_id"])
+
+    case Chatrooms.update_message(message, params |> Map.put("id", params["message_id"])) do
+      {:ok, _message} ->
+        {:noreply, socket}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("delete-message", %{"id" => id}, socket) do
