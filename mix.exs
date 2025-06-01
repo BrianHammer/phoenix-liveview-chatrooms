@@ -61,7 +61,8 @@ defmodule ChatRooms.MixProject do
 
       # Imports
       {:ex_heroicons, "~> 3.1.0"},
-      {:uuid, "~> 1.1"}
+      {:uuid, "~> 1.1"},
+      
     ]
   end
 

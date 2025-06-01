@@ -18,7 +18,7 @@ defmodule ChatRoomsWeb.RoomsComponent do
           <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-gray-900 rounded-full">
           </div>
         </div>
-        <div class="ml-3 flex flex-col">
+        <div class="ml-3 flex flex-col gap-1">
           <div id={@id |> get_text_id_from_id()} class="">
             <.custom_room_link room={@room} />
           </div>
@@ -29,20 +29,20 @@ defmodule ChatRoomsWeb.RoomsComponent do
 
           <div class="flex flex-row items-center gap-2 text-sm text-gray-500 font-medium">
             <button
-              id={get_edit_button_id_from_id(@id)}
-              phx-target={@myself}
-              phx-click={js_toggle_edit_room_form(@id)}
-              class="text-gray-500 hover:text-blue-300"
-            >
-              <Heroicons.icon name="pencil-square" class="w-54 h-5" />
-            </button>
-            <button
               class="hover:text-gray-300"
               phx-target={@myself}
               phx-click="delete-room"
               phx-value-id={@room.id}
             >
               <Heroicons.icon name="trash" class="w-5 h-5 text-gray-500 hover:text-red-500" />
+            </button>
+            <button
+              id={get_edit_button_id_from_id(@id)}
+              phx-target={@myself}
+              phx-click={js_toggle_edit_room_form(@id)}
+              class="text-gray-500 hover:text-blue-300"
+            >
+              <Heroicons.icon name="pencil-square" class="w-54 h-5" />
             </button>
           </div>
         </div>
@@ -55,7 +55,6 @@ defmodule ChatRoomsWeb.RoomsComponent do
   defp room_edit_form(assigns) do
     ~H"""
     <.simple_form
-      :let={f}
       for={@room |> Chatrooms.change_room(%{})}
       phx-submit="update-room"
       phx-target={@myself}
@@ -90,7 +89,7 @@ defmodule ChatRoomsWeb.RoomsComponent do
   end
 
   # I use this so that closing the sidebar works only on mobile screens...
-  def custom_room_link(%{room: room} = assigns) do
+  def custom_room_link(%{room: _room} = assigns) do
     ~H"""
     <!-- This link hides the sidebar -->
     <.link

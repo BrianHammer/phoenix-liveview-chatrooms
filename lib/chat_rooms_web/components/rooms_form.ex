@@ -48,7 +48,7 @@ defmodule ChatRoomsWeb.RoomsForm do
             </div>
           <% end %>
         </div>
-        <.button class="bg-red-500" type="submit" class="..." phx-disable-with="Creating...">
+        <.button class="bg-red-500" type="submit" phx-disable-with="Creating...">
           Create Room
         </.button>
       </.form>
@@ -56,7 +56,7 @@ defmodule ChatRoomsWeb.RoomsForm do
     """
   end
 
-  
+
 
   def handle_event("validate", %{"room" => params}, socket) do
     form =

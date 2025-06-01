@@ -5,54 +5,9 @@ defmodule ChatRoomsWeb.MessagesComponent do
   alias Phoenix.LiveView.JS
   alias ChatRooms.Chatrooms
 
-  def render2(assigns) do
-    ~H"""
-    <ul class="p-4 border-black" id="messages-list" phx-update="stream">
-      <%= for {dom_id, message} <- @messages_stream do %>
-        <li class="py-2 px-4 bg-red" id={dom_id}>
-          <b>{message.username}</b>
-          <p>{message.text}</p>
-          <small>{message.inserted_at |> display_date()}</small>
-          <.button phx-click="delete-message" phx-value-id={message.id}>
-            Delete
-          </.button>
-        </li>
-      <% end %>
-    </ul>
-    """
-  end
-
   ##############################
   # SIDEBAR / CHATROOMS
   ##############################
-
-  defp room_button(assigns) do
-    ~H"""
-    <div class="overflow-y-auto overflow-x-auto">
-      <div class="flex items-center px-4 py-3 hover:bg-gray- cursor-ptr overflow-y-auto overflow-x-auto">
-        <div class="relative">
-          <img
-            class="w-10 h-10 rounded-full"
-            src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpetapixel.com%2Fassets%2Fuploads%2F2019%2F02%2Fdownload-2.jpeg&f=1&nofb=1&ipt=2b24f64061e378a80aed9a80daae2041b3d5810724c9ef7022a6ab026e05d9e6"
-            alt="User avatar"
-          />
-          <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-gray-900 rounded-full">
-          </div>
-        </div>
-        <div class="ml-3 flex flex-col">
-          <a class="font-bold text-white-700 hover:text-white" href="#">The Room Name</a>
-          <div class="flex flex-row items-center gap-2 text-sm text-gray-500 font-medium">
-            <a class="hover:text-gray-300" href="#">
-              Edit
-            </a>
-            <a class="hover:text-gray-300" href="#">Delete</a>
-          </div>
-        </div>
-      </div>
-      <!-- More user list items here -->
-    </div>
-    """
-  end
 
   defp js_show_sidebar_on_mobile() do
     JS.remove_class("hidden", to: "#sidebar")
@@ -65,7 +20,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
         <Heroicons.icon name="bars-3" class="w-8 h-8 text-gray-300" />
       </button>
       <h1 class="text-white text-xl font-bold">{@name}</h1>
-      <p class="text-emerald-500 text-sm">1 Online</p>
+      <p class="text-emerald-500 text-sm">{@online} Online</p>
     </div>
     """
   end
@@ -152,7 +107,6 @@ defmodule ChatRoomsWeb.MessagesComponent do
   defp message_edit_form(%{message: _room} = assigns) do
     ~H"""
     <.simple_form
-      :let={f}
       for={@message |> Chatrooms.change_message(%{})}
       phx-submit="update-message"
       phx-target={@myself}
@@ -191,7 +145,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
     ~H"""
     <div class="flex flex-col h-full w-full">
       <.message_container>
-        <.message_header name={@room.name} />
+        <.message_header online={@users_online} name={@room.name} />
         <.message_list myself={@myself} room={@room} messages_stream={@messages_stream} />
         <.live_component
           module={ChatRoomsWeb.MessagesForm}

@@ -1,19 +1,43 @@
 defmodule ChatRoomsWeb.ChatroomLive do
-  alias ChatRoomsWeb.RoomsForm
-  alias ChatRoomsWeb.MessagesComponent
+  alias ChatRoomsWeb.Presence
   use ChatRoomsWeb, :live_view
 
+  alias ChatRoomsWeb.MessagesComponent
   alias ChatRooms.Chatrooms
   alias ChatRoomsWeb.RoomsComponent
-  alias ChatRoomsWeb.MessagesForm
+
+  @topic "chatrooms"
 
   def mount(_p, _s, socket) do
-    {:ok, socket |> stream_rooms() |> maybe_subscribe_rooms() |> assign_presense_id()}
+    {:ok, socket |> stream_rooms() |> maybe_subscribe_rooms() |> assign_presence_list()}
   end
 
   # def handle_params(%{room_id: room_id}, _s, socket) do
   #  {:noreply, socket |> assign_room!(room_id)}
   # end
+
+  defp assign_presence_list(socket) do
+    presence_id = UUID.uuid4()
+
+    if connected?(socket) do
+      {:ok, _} =
+        Presence.track(self(), @topic, presence_id, %{
+          presence_id: presence_id,
+          is_typing: false
+        })
+    end
+
+    socket
+    |> assign(presense_id: presence_id)
+    |> assign(:presences, flatten_presence_list(Presence.list(@topic)))
+    |> assign(:is_typing, false)
+  end
+
+  defp flatten_presence_list(data) do
+    data
+    |> Map.values()
+    |> Enum.flat_map(fn %{metas: metas} -> metas end)
+  end
 
   def handle_params(%{"room_id" => room_id}, _uri, socket) do
     {:noreply,
@@ -62,13 +86,13 @@ defmodule ChatRoomsWeb.ChatroomLive do
     socket
   end
 
-  def assign_presense_id(socket) do
-    socket
-    |> assign(presense_id: UUID.uuid4() |> IO.inspect())
-  end
-
   defp unsubscribe_from_current_messages(socket) do
     socket
+  end
+
+  def assign_presense_id(socket) do
+    socket
+    |> assign(presense_id: UUID.uuid4())
   end
 
   defp maybe_subscribe_messages(socket, room_id) do
@@ -80,11 +104,19 @@ defmodule ChatRoomsWeb.ChatroomLive do
     socket
   end
 
+  ###########################
+  # RENDER
+  ###########################
+
   def render(%{live_action: :index} = assigns) do
     ~H"""
     <div class="flex flex-row h-screen antialiased text-gray-800 w-screen">
       <.live_component module={RoomsComponent} id="room-sidebar" rooms_stream={@streams.rooms} />
-      <.live_component module={MessagesComponent} id="messages-page" />
+      <.live_component
+        module={MessagesComponent}
+        users_online={@presences |> length()}
+        id="messages-page"
+      />
     </div>
     """
   end
@@ -98,11 +130,16 @@ defmodule ChatRoomsWeb.ChatroomLive do
         id="messages-page"
         messages_stream={@streams.messages}
         room={@room}
+        users_online={@presences |> length()}
       />
     </div>
     <ul></ul>
     """
   end
+
+  ######################################
+  # CODE PUBSUB
+  ######################################
 
   defp redirect_room_upon_deleting(%{assigns: %{room: room}} = socket, deleted_room)
        when room.id == deleted_room.id do
@@ -112,11 +149,6 @@ defmodule ChatRoomsWeb.ChatroomLive do
   end
 
   defp redirect_room_upon_deleting(socket, _deleted_room), do: socket
-
-  ######################################
-  # CODE PUBSUB
-  ######################################
-
   # Room handling
   def handle_info({:room_created, room}, socket) do
     {:noreply, socket |> stream_insert(:rooms, room, at: 0)}

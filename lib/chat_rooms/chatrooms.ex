@@ -259,4 +259,11 @@ defmodule ChatRooms.Chatrooms do
   end
 
   def notify_messages({:error, reason}, _event), do: {:error, reason}
+
+  ######################
+  # Building a site
+  ######################
+  def track() do
+    Presenc
+  end
 end

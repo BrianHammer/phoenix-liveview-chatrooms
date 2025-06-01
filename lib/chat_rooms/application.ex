@@ -18,6 +18,7 @@ defmodule ChatRooms.Application do
       # {ChatRooms.Worker, arg},
       # Start to serve requests, typically the last entry
       ChatRoomsWeb.Endpoint,
+      ChatRoomsWeb.Presence
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
