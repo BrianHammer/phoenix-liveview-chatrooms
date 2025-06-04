@@ -20,7 +20,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
         <Heroicons.icon name="bars-3" class="w-8 h-8 text-gray-300" />
       </button>
       <h1 class="text-white text-xl font-bold">{@name}</h1>
-      <p class="text-emerald-500 text-sm">{@online} Online</p>
+      <p :if={assigns[:online]} class="text-emerald-500 text-sm">{@online} Online</p>
     </div>
     """
   end

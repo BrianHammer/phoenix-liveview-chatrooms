@@ -1,4 +1,5 @@
 defmodule ChatRoomsWeb.ChatroomLive do
+  alias Phoenix.PubSub
   alias ChatRoomsWeb.Presence
   use ChatRoomsWeb, :live_view
 
@@ -6,32 +7,16 @@ defmodule ChatRoomsWeb.ChatroomLive do
   alias ChatRooms.Chatrooms
   alias ChatRoomsWeb.RoomsComponent
 
-  @topic "chatrooms"
-
   def mount(_p, _s, socket) do
-    {:ok, socket |> stream_rooms() |> maybe_subscribe_rooms() |> assign_presence_list()}
+    {:ok,
+     socket
+     |> stream_rooms()
+     |> maybe_subscribe_rooms()}
   end
 
   # def handle_params(%{room_id: room_id}, _s, socket) do
   #  {:noreply, socket |> assign_room!(room_id)}
   # end
-
-  defp assign_presence_list(socket) do
-    presence_id = UUID.uuid4()
-
-    if connected?(socket) do
-      {:ok, _} =
-        Presence.track(self(), @topic, presence_id, %{
-          presence_id: presence_id,
-          is_typing: false
-        })
-    end
-
-    socket
-    |> assign(presense_id: presence_id)
-    |> assign(:presences, flatten_presence_list(Presence.list(@topic)))
-    |> assign(:is_typing, false)
-  end
 
   defp flatten_presence_list(data) do
     data
@@ -42,20 +27,56 @@ defmodule ChatRoomsWeb.ChatroomLive do
   def handle_params(%{"room_id" => room_id}, _uri, socket) do
     {:noreply,
      socket
+     |> untrack_assigned_room()
      |> unsubscribe_from_current_messages()
-     # Remove this later
-     # |> stream_rooms()
      |> assign_room!(room_id)
      |> stream_messages(room_id)
-     |> maybe_subscribe_messages(room_id)}
+     |> maybe_subscribe_messages(room_id)
+     |> track_room(room_id)}
   end
 
   def handle_params(_p, _, socket) do
     {:noreply,
      socket
+     |> untrack_assigned_room()
      |> unsubscribe_from_current_messages()
      |> assign(room: nil)}
   end
+
+  defp get_presence_chatroom_topic(room_id), do: "chatroom:#{room_id}"
+
+  defp track_room(socket, room_id) do
+    presence_id = socket.id
+    topic = get_presence_chatroom_topic(room_id)
+
+    if connected?(socket) do
+      PubSub.subscribe(ChatRooms.PubSub, topic)
+
+      {:ok, _} =
+        Presence.track(self(), topic, presence_id, %{
+          presence_id: presence_id,
+          is_typing: false
+        })
+    end
+
+    socket
+    |> assign(presence_id: presence_id)
+    |> assign(:presences, Presence.list(topic) |> format_presences())
+    |> assign(:is_typing, false)
+  end
+
+  defp untrack_assigned_room(%{assigns: %{room: room}} = socket) when not is_nil(room) do
+    topic = get_presence_chatroom_topic(room.id)
+    presence_id = socket.id
+
+    if connected?(socket) do
+      Presence.untrack(self(), topic, presence_id)
+    end
+
+    socket
+  end
+
+  defp untrack_assigned_room(socket), do: socket
 
   def clear_messages(socket) do
     socket
@@ -82,6 +103,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
   defp unsubscribe_from_current_messages(%{assigns: %{room: room}} = socket)
        when not is_nil(room) do
     Chatrooms.unsubscribe_messages(room.id)
+    IO.puts("UNSUBSCRIBE_CALL")
 
     socket
   end
@@ -97,7 +119,6 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
   defp maybe_subscribe_messages(socket, room_id) do
     if socket |> connected?() do
-      Chatrooms.unsubscribe_messages(room_id)
       Chatrooms.subscribe_messages(room_id)
     end
 
@@ -112,11 +133,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
     ~H"""
     <div class="flex flex-row h-screen antialiased text-gray-800 w-screen">
       <.live_component module={RoomsComponent} id="room-sidebar" rooms_stream={@streams.rooms} />
-      <.live_component
-        module={MessagesComponent}
-        users_online={@presences |> length()}
-        id="messages-page"
-      />
+      <.live_component module={MessagesComponent} id="messages-page" />
     </div>
     """
   end
@@ -130,7 +147,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
         id="messages-page"
         messages_stream={@streams.messages}
         room={@room}
-        users_online={@presences |> length()}
+        users_online={length(@presences)}
       />
     </div>
     <ul></ul>
@@ -175,5 +192,30 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
   def handle_info({:message_updated, message}, socket) do
     {:noreply, socket |> stream_insert(:messages, message)}
+  end
+
+  ###########
+  # PRESENCE
+  ###########
+
+  def handle_info(%{event: "presence_diff", payload: _diff}, %{assigns: %{room: room}} = socket) do
+    {:noreply, socket |> handle_presence_diff()}
+  end
+
+  defp handle_presence_diff(%{assigns: %{room: room}} = socket) when not is_nil(room) do
+    presences = Presence.list(get_presence_chatroom_topic(room.id))
+
+    socket |> assign(presences: presences |> format_presences)
+  end
+
+  defp format_presences(presences) do
+    IO.puts("\n\n\n\n\n\n\n\n\n PRESENCE_LIST: \n\n")
+
+    presences
+    |> Enum.map(fn {_user_id, data} ->
+      data[:metas]
+      |> List.first()
+    end)
+    |> IO.inspect()
   end
 end
