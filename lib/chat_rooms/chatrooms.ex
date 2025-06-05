@@ -263,7 +263,4 @@ defmodule ChatRooms.Chatrooms do
   ######################
   # Building a site
   ######################
-  def track() do
-    Presenc
-  end
 end

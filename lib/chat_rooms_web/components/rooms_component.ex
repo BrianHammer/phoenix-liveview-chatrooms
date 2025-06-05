@@ -8,14 +8,17 @@ defmodule ChatRoomsWeb.RoomsComponent do
   defp room_button(assigns) do
     ~H"""
     <li id={@id} class="overflow-y-auto overflow-x-auto">
-      <div class="flex items-center px-4 py-3 cursor-ptr">
+      <div class="flex items-center px-4 py-3">
         <div class="relative">
           <img
             class="w-10 h-10 rounded-full"
-            src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpetapixel.com%2Fassets%2Fuploads%2F2019%2F02%2Fdownload-2.jpeg&f=1&nofb=1&ipt=2b24f64061e378a80aed9a80daae2041b3d5810724c9ef7022a6ab026e05d9e6"
+            src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Fgroup-icon-flat%2Fgroup-icon-flat-10.jpg&f=1&nofb=1&ipt=22f11bb5d0ad1273788e72b9ec5bab48a8c61ca951994255621fbd5af86fe15f"
             alt="User avatar"
           />
-          <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-gray-900 rounded-full">
+          <div
+            hidden
+            class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-gray-900 rounded-full"
+          >
           </div>
         </div>
         <div class="ml-3 flex flex-col gap-1">
@@ -109,6 +112,35 @@ defmodule ChatRoomsWeb.RoomsComponent do
     """
   end
 
+  def render_working_scrollbar_ex(assigns) do
+    ~H"""
+    <div id={@id} class="flex h-screen bg-gray-100">
+      <!-- Debug container - paste this temporarily at your layout's root -->
+      <!-- Simplified sidebar -->
+      <div class="flex flex-col w-64 bg-gray-800 text-white">
+        <!-- Fixed header -->
+        <div class="h-16 p-4 border-b border-gray-700 flex-shrink-0">
+          Header
+        </div>
+
+    <!-- Scroll test -->
+        <div class="flex-1 min-h-0 overflow-y-auto border border-green-500">
+          <ul class="space-y-2 p-2">
+            <%= for {dom_id, room} <- @rooms_stream do %>
+              <.room_button myself={@myself} room={room} id={dom_id} />
+            <% end %>
+          </ul>
+        </div>
+      </div>
+
+    <!-- Main content -->
+      <div class="flex-1 p-8">
+        <button onclick="alert('Working')">Test</button>
+      </div>
+    </div>
+    """
+  end
+
   def render(assigns) do
     ~H"""
     <div
@@ -119,22 +151,26 @@ defmodule ChatRoomsWeb.RoomsComponent do
         <Heroicons.icon name="x-mark" class="w-8 h-8 relative top-5 left-5" />
       </button>
 
-      <div class="flex flex-col items-center justify-center  border-b border-gray-800 p-4">
+      <div class="flex flex-col items-center justify-center border-b border-gray-800 p-4 ">
         <h1 class="text-3xl font-bold">Chat Rooms</h1>
         <button>Create New</button>
 
         <.live_component module={RoomsForm} id="room-form-sidebar" />
       </div>
 
-      <ul id="rooms-sidebar-list" phx-update="stream">
-        <%= for {dom_id, room} <- @rooms_stream do %>
-          <.room_button myself={@myself} room={room} id={dom_id} />
-        <% end %>
-      </ul>
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        <!-- Changed this line -->
+        <ul id="rooms-sidebar-list" phx-update="stream" class="h-full">
+          <%= for {dom_id, room} <- @rooms_stream do %>
+            <.room_button myself={@myself} room={room} id={dom_id} />
+          <% end %>
+        </ul>
+      </div>
     </div>
     """
   end
 
+  @spec handle_event(<<_::88>>, map(), any()) :: {:noreply, any()}
   def handle_event("update-room", params, socket) do
     IO.inspect(params)
 

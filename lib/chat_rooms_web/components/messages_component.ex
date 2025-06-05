@@ -35,6 +35,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
     """
   end
 
+  # I am not using this component
   def message_myself(assigns) do
     ~H"""
     <div class="col-start-6 col-end-13 p-3 rounded-lg">

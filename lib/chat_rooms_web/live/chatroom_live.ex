@@ -18,12 +18,6 @@ defmodule ChatRoomsWeb.ChatroomLive do
   #  {:noreply, socket |> assign_room!(room_id)}
   # end
 
-  defp flatten_presence_list(data) do
-    data
-    |> Map.values()
-    |> Enum.flat_map(fn %{metas: metas} -> metas end)
-  end
-
   def handle_params(%{"room_id" => room_id}, _uri, socket) do
     {:noreply,
      socket
@@ -47,30 +41,22 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
   defp track_room(socket, room_id) do
     presence_id = socket.id
-    topic = get_presence_chatroom_topic(room_id)
 
     if connected?(socket) do
-      PubSub.subscribe(ChatRooms.PubSub, topic)
-
-      {:ok, _} =
-        Presence.track(self(), topic, presence_id, %{
-          presence_id: presence_id,
-          is_typing: false
-        })
+      Presence.track_room(room_id, presence_id)
     end
 
     socket
     |> assign(presence_id: presence_id)
-    |> assign(:presences, Presence.list(topic) |> format_presences())
+    |> assign(:presences, Presence.list_room(room_id))
     |> assign(:is_typing, false)
   end
 
   defp untrack_assigned_room(%{assigns: %{room: room}} = socket) when not is_nil(room) do
-    topic = get_presence_chatroom_topic(room.id)
     presence_id = socket.id
 
     if connected?(socket) do
-      Presence.untrack(self(), topic, presence_id)
+      Presence.untrack_room(room.id, presence_id)
     end
 
     socket
@@ -103,7 +89,6 @@ defmodule ChatRoomsWeb.ChatroomLive do
   defp unsubscribe_from_current_messages(%{assigns: %{room: room}} = socket)
        when not is_nil(room) do
     Chatrooms.unsubscribe_messages(room.id)
-    IO.puts("UNSUBSCRIBE_CALL")
 
     socket
   end
@@ -177,7 +162,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
   end
 
   def handle_info({:room_updated, room}, socket) do
-    {:noreply, socket |> stream_insert(:rooms, room)}
+    {:noreply, socket |> stream_insert(:rooms, room) |> assign(room: room)}
   end
 
   # message handling
@@ -198,24 +183,11 @@ defmodule ChatRoomsWeb.ChatroomLive do
   # PRESENCE
   ###########
 
-  def handle_info(%{event: "presence_diff", payload: _diff}, %{assigns: %{room: room}} = socket) do
+  def handle_info(%{event: "presence_diff", payload: _diff}, %{assigns: %{room: _room}} = socket) do
     {:noreply, socket |> handle_presence_diff()}
   end
 
   defp handle_presence_diff(%{assigns: %{room: room}} = socket) when not is_nil(room) do
-    presences = Presence.list(get_presence_chatroom_topic(room.id))
-
-    socket |> assign(presences: presences |> format_presences)
-  end
-
-  defp format_presences(presences) do
-    IO.puts("\n\n\n\n\n\n\n\n\n PRESENCE_LIST: \n\n")
-
-    presences
-    |> Enum.map(fn {_user_id, data} ->
-      data[:metas]
-      |> List.first()
-    end)
-    |> IO.inspect()
+    socket |> assign(presences: Presence.list_room(room.id))
   end
 end
