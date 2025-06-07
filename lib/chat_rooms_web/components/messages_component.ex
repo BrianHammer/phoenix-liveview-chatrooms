@@ -27,7 +27,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
 
   defp message_container(assigns) do
     ~H"""
-    <div class="flex flex-col h-full bg-gray-800 p-4 w-full">
+    <div class="flex flex-col h-full bg-gray-800 p-4 w-full relative">
       <div class="flex flex-col h-full">
         {render_slot(@inner_block)}
       </div>
@@ -140,12 +140,31 @@ defmodule ChatRoomsWeb.MessagesComponent do
     """
   end
 
+  defp users_typing_display(assigns) do
+    ~H"""
+    <div class=" -top-10 p-2 text-gray-500 text-sm font-bold">
+      {show_texters(@users_typing)}
+    </div>
+    """
+  end
+
+  defp show_texters([]), do: ""
+
+  defp show_texters([_presence]) do
+    "1 user is typing..."
+  end
+
+  defp show_texters(presences) do
+    "#{presences |> length()} users are typing..."
+  end
+
   def render(%{room: _room, messages_stream: _messages_stream} = assigns) do
     ~H"""
     <div class="flex flex-col h-full w-full">
       <.message_container>
         <.message_header online={@users_online} name={@room.name} />
         <.message_list myself={@myself} room={@room} messages_stream={@messages_stream} />
+        <.users_typing_display users_typing={@users_typing} />
         <.live_component
           module={ChatRoomsWeb.MessagesForm}
           id="main-messages-form"
@@ -169,8 +188,6 @@ defmodule ChatRoomsWeb.MessagesComponent do
     </div>
     """
   end
-
-
 
   def handle_event("update-message", params, socket) do
     message = Chatrooms.get_message!(params["message_id"])

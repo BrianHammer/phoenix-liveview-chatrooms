@@ -130,12 +130,6 @@ defmodule ChatRoomsWeb.MessagesForm do
     """
   end
 
-  defp set_is_texting(socket, old_message, new_message)
-       when old_message.text !== new_message.text do
-    presence_id = socket.id
-
-    socket
-  end
 
   defp set_is_texting(socket, _msg1, _msg2), do: socket
 
@@ -145,7 +139,7 @@ defmodule ChatRoomsWeb.MessagesForm do
 
   def handle_event("validate", %{"message" => params}, socket) do
     form =
-      %Message{} |> Chatrooms.change_message(params) |> to_form_with_validation() |> IO.inspect()
+      %Message{} |> Chatrooms.change_message(params) |> to_form_with_validation()
 
     {:noreply,
      socket
@@ -162,9 +156,12 @@ defmodule ChatRoomsWeb.MessagesForm do
     end
   end
 
-  def handle_event("typing-changed", %{"is_typing" => is_typing?}, %{room_id: room_id} = socket) do
-    # TODO: Update me!
-    # Presence.set_user_texting(room_id, socket.id)
+  def handle_event(
+        "typing-changed",
+        %{"is_typing" => is_typing?},
+        %{assigns: %{room_id: room_id}} = socket
+      ) do
+    ChatRoomsWeb.Presence.set_user_texting(room_id, socket.id, is_typing?)
     {:noreply, socket}
   end
 

@@ -116,7 +116,7 @@ defmodule ChatRoomsWeb.RoomsComponent do
     ~H"""
     <div
       id="sidebar"
-      class="absolute z-10 w-full h-full md:static md:w-96 flex flex-col h-screen bg-gray-900 text-gray-300"
+      class="absolute hidden md:block z-10 w-full h-full md:static md:w-96 flex flex-col h-screen bg-gray-900 text-gray-300"
     >
       <button class="md:hidden" phx-click={js_hide_sidebar_on_mobile()}>
         <Heroicons.icon name="x-mark" class="w-8 h-8 relative top-5 left-5" />
@@ -171,8 +171,6 @@ defmodule ChatRoomsWeb.RoomsComponent do
 
   @spec handle_event(<<_::88>>, map(), any()) :: {:noreply, any()}
   def handle_event("update-room", params, socket) do
-    IO.inspect(params)
-
     rooms = Chatrooms.get_room!(params["room_id"])
 
     case rooms |> Chatrooms.update_room(params |> Map.put("id", params["room_id"])) do

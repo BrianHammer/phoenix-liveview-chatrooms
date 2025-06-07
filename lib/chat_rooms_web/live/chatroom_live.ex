@@ -133,6 +133,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
         messages_stream={@streams.messages}
         room={@room}
         users_online={length(@presences)}
+        users_typing={Presence.get_typing_presences(@presences)}
       />
     </div>
     <ul></ul>
@@ -200,6 +201,8 @@ defmodule ChatRoomsWeb.ChatroomLive do
   end
 
   defp handle_presence_diff(%{assigns: %{room: room}} = socket) when not is_nil(room) do
-    socket |> assign(presences: Presence.list_room(room.id))
+
+    socket
+    |> assign(presences: Presence.list_room(room.id))
   end
 end

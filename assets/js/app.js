@@ -34,7 +34,8 @@ let Hooks = {};
 // It will send an event at the start of a client, and ends when input ends
 Hooks.TypingIndicator = {
   mounted() {
-    this.TIME_DELAY = 2000; //milliseconds
+    console.log(this.el.dataset.timeDelay)
+    this.TIME_DELAY = 5000; //milliseconds
     this.isTyping = false;
     this.lastDebouncedRoomId = null;
 

@@ -59,4 +59,9 @@ defmodule ChatRoomsWeb.Presence do
 
     __MODULE__.update(self(), topic, key, new_metas)
   end
+
+  def get_typing_presences(presences) do
+    presences
+    |> Enum.filter(fn presence -> presence.is_typing end)
+  end
 end
