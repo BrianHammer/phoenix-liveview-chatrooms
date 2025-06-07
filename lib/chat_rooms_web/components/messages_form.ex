@@ -62,11 +62,15 @@ defmodule ChatRoomsWeb.MessagesForm do
           <div class="flex-grow relative w-full">
             <input
               type="text"
+              phx-target={@myself}
               name={@form[:text].name}
               id={@form[:text].id}
               value={Phoenix.HTML.Form.input_value(@form, :text)}
               placeholder="Type your message here..."
               phx-debounce="750"
+              phx-hook="TypingIndicator"
+              data-room-id={@room_id}
+              id={"messages-form-#{@room_id}"}
               class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:text].errors != [], do: "border-red-500 focus:border-red-500"}"}
             />
             <span class="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400">
@@ -99,19 +103,13 @@ defmodule ChatRoomsWeb.MessagesForm do
   def render2(assigns) do
     ~H"""
     <div>
-      <.form
-        for={@form}
-        id="messages-form"
-        phx-submit="message-submit"
-        phx-change="validate"
-        phx-target={@myself}
-      >
+      <.form for={@form} id="messages-form" phx-submit="message-submit" phx-target={@myself}>
         <.input
           label="Username"
           field={@form[:username]}
           type="text"
           placeholder="Your name"
-          phx-debounce="750"
+          phx-debounce="250"
           autofocus
         />
 
@@ -120,7 +118,8 @@ defmodule ChatRoomsWeb.MessagesForm do
           field={@form[:text]}
           type="text"
           placeholder="Your message"
-          phx-debounce="750"
+          phx-change="texting"
+          phx-throttle="1000"
         />
 
         <input id="hidden-room-id" type="hidden" name="message[room_id]" value={@room_id} />
@@ -131,11 +130,26 @@ defmodule ChatRoomsWeb.MessagesForm do
     """
   end
 
+  defp set_is_texting(socket, old_message, new_message)
+       when old_message.text !== new_message.text do
+    presence_id = socket.id
+
+    socket
+  end
+
+  defp set_is_texting(socket, _msg1, _msg2), do: socket
+
+  def handle_event("texting", _, socket) do
+    IO.puts("Texting texting texting")
+  end
+
   def handle_event("validate", %{"message" => params}, socket) do
     form =
-      %Message{} |> Chatrooms.change_message(params) |> to_form_with_validation()
+      %Message{} |> Chatrooms.change_message(params) |> to_form_with_validation() |> IO.inspect()
 
-    {:noreply, assign(socket, :form, form)}
+    {:noreply,
+     socket
+     |> assign(:form, form)}
   end
 
   def handle_event("message-submit", %{"message" => inputs}, socket) do
@@ -146,6 +160,12 @@ defmodule ChatRoomsWeb.MessagesForm do
       {:ok, changeset} ->
         {:noreply, socket |> clear_message_keep_username_form(changeset)}
     end
+  end
+
+  def handle_event("typing-changed", %{"is_typing" => is_typing?}, %{room_id: room_id} = socket) do
+    # TODO: Update me!
+    # Presence.set_user_texting(room_id, socket.id)
+    {:noreply, socket}
   end
 
   defp to_form_with_validation(changeset),

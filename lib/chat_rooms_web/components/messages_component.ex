@@ -57,38 +57,36 @@ defmodule ChatRoomsWeb.MessagesComponent do
   def message(assigns) do
     ~H"""
     <div id={@id} class="col-start-1 col-end-12 md:col-end-10 lg:col-end-8 rounded-lg">
-      <div class="flex flex-row items-start gap-2">
-        <div class="flex flex-col items-start justify-start gap-1">
-          <div class="flex flex-row gap-2 items-center">
-            <div class="text-gray-300 font-semibold text-sm">{@message.username}</div>
-            <span class="text-sm text-gray-400">{@message.inserted_at |> display_date()}</span>
-            <span :if={@message.updated_at != @message.inserted_at} class="text-xs text-gray-500">
-              Edited on {@message.updated_at |> display_date()}
-            </span>
-          </div>
-          <div
-            id={get_text_id_from_dom_id(@id)}
-            class="text-md bg-gray-700 py-2 px-4 shadow rounded-xl text-gray-200 break-all"
+      <div class="flex flex-col items-start justify-start gap-1">
+        <div class="flex flex-row gap-2 items-center">
+          <div class="text-gray-300 font-semibold text-sm">{@message.username}</div>
+          <span class="text-sm text-gray-400">{@message.inserted_at |> display_date()}</span>
+          <span :if={@message.updated_at != @message.inserted_at} class="text-xs text-gray-500">
+            Edited on {@message.updated_at |> display_date()}
+          </span>
+        </div>
+        <div
+          id={get_text_id_from_dom_id(@id)}
+          class="text-md bg-gray-700 py-2 px-4 shadow rounded-xl text-gray-200 break-all"
+        >
+          {@message.text}
+        </div>
+        <div id={get_edit_message_form_id_from_id(@id)} class="hidden">
+          <.message_edit_form dom_id={@id} message={@message} myself={@myself} />
+        </div>
+        <div class="flex flex-row gap-2 items-center font-semibold text-sm">
+          <button phx-target={@myself} phx-value-id={@message.id} phx-click="delete-message">
+            <Heroicons.icon name="trash" class="w-5 h-5 text-gray-500 hover:text-red-500" />
+          </button>
+          <button
+            id={get_edit_button_id_from_id(@id)}
+            phx-target={@myself}
+            phx-value-id={@id}
+            phx-click={toggle_edit_message_form(@id)}
+            class="text-gray-500 hover:text-blue-300"
           >
-            {@message.text}
-          </div>
-          <div id={get_edit_message_form_id_from_id(@id)} class="hidden">
-            <.message_edit_form dom_id={@id} message={@message} myself={@myself} />
-          </div>
-          <div class="flex flex-row gap-2 items-center font-semibold text-sm">
-            <button phx-target={@myself} phx-value-id={@message.id} phx-click="delete-message">
-              <Heroicons.icon name="trash" class="w-5 h-5 text-gray-500 hover:text-red-500" />
-            </button>
-            <button
-              id={get_edit_button_id_from_id(@id)}
-              phx-target={@myself}
-              phx-value-id={@id}
-              phx-click={toggle_edit_message_form(@id)}
-              class="text-gray-500 hover:text-blue-300"
-            >
-              <Heroicons.icon name="pencil-square" class="w-54 h-5" />
-            </button>
-          </div>
+            <Heroicons.icon name="pencil-square" class="w-54 h-5" />
+          </button>
         </div>
       </div>
     </div>
@@ -131,7 +129,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
 
   defp message_list(assigns) do
     ~H"""
-    <div class="h-full">
+    <div class="h-full overflow-y-auto py-12">
       <!-- Ensure full height -->
       <ul class="grid grid-cols-12 gap-y-4" id="messages-list" phx-update="stream">
         <%= for {dom_id, message} <- @messages_stream do %>
@@ -172,9 +170,9 @@ defmodule ChatRoomsWeb.MessagesComponent do
     """
   end
 
+
+
   def handle_event("update-message", params, socket) do
-    IO.inspect(params)
-    IO.inspect(params["message_id"])
     message = Chatrooms.get_message!(params["message_id"])
 
     case Chatrooms.update_message(message, params |> Map.put("id", params["message_id"])) do

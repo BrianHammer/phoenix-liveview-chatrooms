@@ -143,6 +143,13 @@ defmodule ChatRoomsWeb.ChatroomLive do
   # CODE PUBSUB
   ######################################
 
+  defp update_active_room_upon_edit(%{assigns: %{room: room}} = socket, updated_room)
+       when room.id == updated_room.id do
+    socket |> assign(:room, updated_room)
+  end
+
+  defp update_active_room_upon_edit(socket, _different_room), do: socket
+
   defp redirect_room_upon_deleting(%{assigns: %{room: room}} = socket, deleted_room)
        when room.id == deleted_room.id do
     socket
@@ -158,11 +165,16 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
   def handle_info({:room_deleted, deleted_room}, socket) do
     {:noreply,
-     socket |> redirect_room_upon_deleting(deleted_room) |> stream_delete(:rooms, deleted_room)}
+     socket
+     |> redirect_room_upon_deleting(deleted_room)
+     |> stream_delete(:rooms, deleted_room)}
   end
 
-  def handle_info({:room_updated, room}, socket) do
-    {:noreply, socket |> stream_insert(:rooms, room) |> assign(room: room)}
+  def handle_info({:room_updated, updated_room}, socket) do
+    {:noreply,
+     socket
+     |> update_active_room_upon_edit(updated_room)
+     |> stream_insert(:rooms, updated_room)}
   end
 
   # message handling

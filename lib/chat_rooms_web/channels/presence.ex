@@ -47,4 +47,16 @@ defmodule ChatRoomsWeb.Presence do
     |> __MODULE__.list()
     |> format_presences()
   end
+
+  def set_user_texting(room_id, presence_id, is_typing?) do
+    topic = room_id |> get_room_topic_from_id()
+    key = presence_id
+
+    new_metas =
+      __MODULE__.get_by_key(topic, key)[:metas]
+      |> List.first()
+      |> Map.merge(%{is_typing: is_typing?})
+
+    __MODULE__.update(self(), topic, key, new_metas)
+  end
 end

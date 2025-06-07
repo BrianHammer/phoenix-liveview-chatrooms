@@ -112,30 +112,28 @@ defmodule ChatRoomsWeb.RoomsComponent do
     """
   end
 
-  def render_working_scrollbar_ex(assigns) do
+  def render(assigns) do
     ~H"""
-    <div id={@id} class="flex h-screen bg-gray-100">
-      <!-- Debug container - paste this temporarily at your layout's root -->
-      <!-- Simplified sidebar -->
-      <div class="flex flex-col w-64 bg-gray-800 text-white">
-        <!-- Fixed header -->
-        <div class="h-16 p-4 border-b border-gray-700 flex-shrink-0">
-          Header
-        </div>
+    <div
+      id="sidebar"
+      class="absolute z-10 w-full h-full md:static md:w-96 flex flex-col h-screen bg-gray-900 text-gray-300"
+    >
+      <button class="md:hidden" phx-click={js_hide_sidebar_on_mobile()}>
+        <Heroicons.icon name="x-mark" class="w-8 h-8 relative top-5 left-5" />
+      </button>
+      <div class="flex flex-col items-center justify-center border-b border-gray-800 p-4 ">
+        <h1 class="text-3xl font-bold">Chat Rooms</h1>
+        <p>Create New</p>
 
-    <!-- Scroll test -->
-        <div class="flex-1 min-h-0 overflow-y-auto border border-green-500">
-          <ul class="space-y-2 p-2">
-            <%= for {dom_id, room} <- @rooms_stream do %>
-              <.room_button myself={@myself} room={room} id={dom_id} />
-            <% end %>
-          </ul>
-        </div>
+        <.live_component module={RoomsForm} id="room-form-sidebar" />
       </div>
 
-    <!-- Main content -->
-      <div class="flex-1 p-8">
-        <button onclick="alert('Working')">Test</button>
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        <ul id="rooms-list" class="space-y-2 p-2 smooth-scroll" phx-update="stream">
+          <%= for {dom_id, room} <- @rooms_stream do %>
+            <.room_button myself={@myself} room={room} id={dom_id} />
+          <% end %>
+        </ul>
       </div>
     </div>
     """
@@ -158,7 +156,8 @@ defmodule ChatRoomsWeb.RoomsComponent do
         <.live_component module={RoomsForm} id="room-form-sidebar" />
       </div>
 
-      <div class="flex-1 min-h-0 overflow-y-auto">
+      <div class="
+      flex-1 overflow-y-auto">
         <!-- Changed this line -->
         <ul id="rooms-sidebar-list" phx-update="stream" class="h-full">
           <%= for {dom_id, room} <- @rooms_stream do %>
