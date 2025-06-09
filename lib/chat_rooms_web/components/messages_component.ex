@@ -20,7 +20,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
         <Heroicons.icon name="bars-3" class="w-8 h-8 text-gray-300" />
       </button>
       <h1 class="text-white text-xl font-bold">{@name}</h1>
-      <p :if={assigns[:online]} class="text-emerald-500 text-sm">{@online} Online</p>
+      <p :if={assigns[:online]} class="text-emerald-500 text-md font-bold">{@online} Online</p>
     </div>
     """
   end
@@ -129,7 +129,10 @@ defmodule ChatRoomsWeb.MessagesComponent do
 
   defp message_list(assigns) do
     ~H"""
-    <div class="h-full overflow-y-auto py-12">
+    <div class="h-full overflow-y-auto py-4">
+      <.button phx-click="load-older-messages" class="w-full my-12">
+        Load Previous Messages...
+      </.button>
       <!-- Ensure full height -->
       <ul class="grid grid-cols-12 gap-y-4" id="messages-list" phx-update="stream">
         <%= for {dom_id, message} <- @messages_stream do %>

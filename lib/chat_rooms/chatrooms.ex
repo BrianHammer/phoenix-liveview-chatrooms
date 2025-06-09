@@ -140,6 +140,15 @@ defmodule ChatRooms.Chatrooms do
     |> Repo.all()
   end
 
+  def list_messages_from_room(room_id, before_timestamp \\ nil) do
+    MessageQuery.messages()
+    |> MessageQuery.from_room(room_id)
+    |> MessageQuery.limit(3)
+    |> MessageQuery.before(before_timestamp)
+    |> Repo.all()
+    |> Enum.reverse()
+  end
+
   @doc """
   Gets a single message.
 

@@ -5,7 +5,19 @@ defmodule ChatRooms.Chatrooms.MessageQuery do
 
   def messages() do
     from m in Message,
-      order_by: m.inserted_at
+      order_by: [desc: m.inserted_at]
+  end
+
+  def limit(query, limit \\ 30) do
+    from q in query,
+      limit: ^limit
+  end
+
+  def before(query, before_timestamp) when is_nil(before_timestamp), do: query
+
+  def before(query, before_timestamp) do
+    from q in query,
+      where: q.inserted_at < ^before_timestamp
   end
 
   def from_room(query, room_id) do

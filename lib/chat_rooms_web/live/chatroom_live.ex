@@ -37,8 +37,6 @@ defmodule ChatRoomsWeb.ChatroomLive do
      |> assign(room: nil)}
   end
 
-  defp get_presence_chatroom_topic(room_id), do: "chatroom:#{room_id}"
-
   defp track_room(socket, room_id) do
     presence_id = socket.id
 
@@ -73,12 +71,43 @@ defmodule ChatRoomsWeb.ChatroomLive do
   def assign_room!(socket, room_id),
     do: socket |> assign(room: Chatrooms.get_room!(room_id), reset: true)
 
-  defp stream_rooms(socket), do: socket |> stream(:rooms, Chatrooms.list_rooms(), reset: true)
+  defp stream_rooms(socket) do
+    rooms = Chatrooms.list_rooms()
+
+    socket
+    |> stream(:rooms, rooms, reset: true)
+    |> assign(:last_room_timestamp, rooms |> get_last_room_timestamp())
+  end
+
+  defp get_last_room_timestamp([]), do: DateTime.utc_now()
+
+  defp get_last_room_timestamp(rooms_list),
+    do: rooms_list |> List.first() |> Map.get(:inserted_at)
 
   defp stream_messages(socket, room_id) do
-    messages = Chatrooms.list_all_messages_from_room(room_id)
-    socket |> stream(:messages, messages, reset: true)
+    messages = Chatrooms.list_messages_from_room(room_id)
+
+    socket
+    |> stream(:messages, messages, reset: true)
+    |> assign(:last_message_timestamp, get_last_message_timestamp(messages))
   end
+
+  defp append_messages(socket, room_id, past_timestamp) do
+    case Chatrooms.list_messages_from_room(room_id, past_timestamp) do
+      [] ->
+        socket |> put_flash(:error, "You have reached the top of the page")
+
+      messages ->
+        socket
+        |> stream(:messages, messages |> Enum.reverse(), at: 0)
+        |> assign(:last_message_timestamp, get_last_message_timestamp(messages))
+    end
+  end
+
+  defp get_last_message_timestamp([]), do: DateTime.utc_now()
+
+  defp get_last_message_timestamp(message_list),
+    do: message_list |> List.first() |> Map.get(:inserted_at)
 
   defp maybe_subscribe_rooms(socket) do
     if socket |> connected?(), do: Chatrooms.subscribe_rooms()
@@ -140,6 +169,22 @@ defmodule ChatRoomsWeb.ChatroomLive do
     """
   end
 
+  def handle_event(
+        "load-older-messages",
+        _params,
+        %{assigns: %{room: room, last_message_timestamp: last_message_timestamp}} = socket
+      ) do
+    {:noreply, socket |> append_messages(room.id, last_message_timestamp)}
+  end
+
+  def handle_event(
+        "load-older-rooms",
+        _params,
+        %{assigns: %{last_room_timestamp: last_room_timestamp}} = socket
+      ) do
+    {:noreply, socket}
+  end
+
   ######################################
   # CODE PUBSUB
   ######################################
@@ -150,6 +195,15 @@ defmodule ChatRoomsWeb.ChatroomLive do
   end
 
   defp update_active_room_upon_edit(socket, _different_room), do: socket
+
+  defp maybe_update_message_stream(
+         %{assigns: %{last_message_timestamp: last_message_timestamp}} = socket,
+         message
+       )
+       when last_message_timestamp <= message.inserted_at,
+       do: socket |> stream_insert(:messages, message)
+
+  defp maybe_update_message_stream(socket, _msg), do: socket
 
   defp redirect_room_upon_deleting(%{assigns: %{room: room}} = socket, deleted_room)
        when room.id == deleted_room.id do
@@ -189,20 +243,21 @@ defmodule ChatRoomsWeb.ChatroomLive do
   end
 
   def handle_info({:message_updated, message}, socket) do
-    {:noreply, socket |> stream_insert(:messages, message)}
+    {:noreply, socket |> maybe_update_message_stream(message)}
+  end
+
+  def handle_info(%{event: "presence_diff", payload: _diff}, %{assigns: %{room: _room}} = socket) do
+    {:noreply, socket |> handle_presence_diff()}
   end
 
   ###########
   # PRESENCE
   ###########
 
-  def handle_info(%{event: "presence_diff", payload: _diff}, %{assigns: %{room: _room}} = socket) do
-    {:noreply, socket |> handle_presence_diff()}
-  end
-
   defp handle_presence_diff(%{assigns: %{room: room}} = socket) when not is_nil(room) do
-
     socket
     |> assign(presences: Presence.list_room(room.id))
   end
+
+  defp handle_presence_diff(socket), do: socket
 end

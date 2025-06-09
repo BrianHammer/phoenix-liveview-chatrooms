@@ -114,26 +114,28 @@ defmodule ChatRoomsWeb.RoomsComponent do
 
   def render(assigns) do
     ~H"""
-    <div
-      id="sidebar"
-      class="absolute hidden md:block z-10 w-full h-full md:static md:w-96 flex flex-col h-screen bg-gray-900 text-gray-300"
-    >
-      <button class="md:hidden" phx-click={js_hide_sidebar_on_mobile()}>
-        <Heroicons.icon name="x-mark" class="w-8 h-8 relative top-5 left-5" />
-      </button>
-      <div class="flex flex-col items-center justify-center border-b border-gray-800 p-4 ">
-        <h1 class="text-3xl font-bold">Chat Rooms</h1>
-        <p>Create New</p>
+    <div id="sidebar" class="z-10 absolute static hidden w-full md:w-96 h-full md:static md:block">
+      <div class="w-full md:w-full h-full flex flex-col bg-gray-900 text-gray-300">
+        <button class="md:hidden" phx-click={js_hide_sidebar_on_mobile()}>
+          <Heroicons.icon name="x-mark" class="w-8 h-8 relative top-5 left-5" />
+        </button>
+        <div class="flex flex-col items-center justify-center border-b border-gray-800 p-4 ">
+          <h1 class="text-3xl font-bold">Chat Rooms</h1>
+          <p>Create New</p>
 
-        <.live_component module={RoomsForm} id="room-form-sidebar" />
-      </div>
+          <.live_component module={RoomsForm} id="room-form-sidebar" />
+        </div>
 
-      <div class="flex-1 min-h-0 overflow-y-auto">
-        <ul id="rooms-list" class="space-y-2 p-2 smooth-scroll" phx-update="stream">
-          <%= for {dom_id, room} <- @rooms_stream do %>
-            <.room_button myself={@myself} room={room} id={dom_id} />
-          <% end %>
-        </ul>
+        <div class="flex-1 overflow-y-auto">
+          <ul id="rooms-list" class="space-y-2 p-2" phx-update="stream">
+            <%= for {dom_id, room} <- @rooms_stream do %>
+              <.room_button myself={@myself} room={room} id={dom_id} />
+            <% end %>
+            <.button :if={length(@rooms_stream.inserts) >= 15} phx-click="load-older-rooms">
+              Load more rooms...
+            </.button>
+          </ul>
+        </div>
       </div>
     </div>
     """
