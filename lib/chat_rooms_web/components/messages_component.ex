@@ -130,7 +130,11 @@ defmodule ChatRoomsWeb.MessagesComponent do
   defp message_list(assigns) do
     ~H"""
     <div class="h-full overflow-y-auto py-4">
-      <.button phx-click="load-older-messages" class="w-full my-12">
+      <.button
+        :if={@messages_stream.inserts |> length() >= Chatrooms.get_query_limit()}
+        phx-click="load-older-messages"
+        class="w-full my-12"
+      >
         Load Previous Messages...
       </.button>
       <!-- Ensure full height -->

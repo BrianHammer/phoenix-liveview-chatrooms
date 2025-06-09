@@ -11,6 +11,10 @@ defmodule ChatRooms.Chatrooms do
 
   alias ChatRooms.Chatrooms.Room
 
+  @default_query_limit 30
+
+  def get_query_limit(), do: @default_query_limit
+
   @doc """
   Returns the list of rooms.
 
@@ -20,8 +24,15 @@ defmodule ChatRooms.Chatrooms do
       [%Room{}, ...]
 
   """
-  def list_rooms do
+  def list_all_rooms do
     RoomQuery.rooms()
+    |> Repo.all()
+  end
+
+  def list_rooms(after_timestamp \\ nil) do
+    RoomQuery.rooms()
+    |> RoomQuery.limit(@default_query_limit)
+    |> RoomQuery.after_timestamp(after_timestamp)
     |> Repo.all()
   end
 
@@ -143,7 +154,7 @@ defmodule ChatRooms.Chatrooms do
   def list_messages_from_room(room_id, before_timestamp \\ nil) do
     MessageQuery.messages()
     |> MessageQuery.from_room(room_id)
-    |> MessageQuery.limit(3)
+    |> MessageQuery.limit(@default_query_limit)
     |> MessageQuery.before(before_timestamp)
     |> Repo.all()
     |> Enum.reverse()

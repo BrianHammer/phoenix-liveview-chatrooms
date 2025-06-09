@@ -12,10 +12,10 @@ defmodule ChatRooms.Chatrooms.RoomQuery do
     from q in query, limit: ^limit
   end
 
-  def before(query, nil), do: query
+  def after_timestamp(query, nil), do: query
 
-  def before(query, timestamp) do
-    from q in query, where: q.inserted_at > ^timestamp
+  def after_timestamp(query, after_timestamp) do
+    from q in query, where: q.inserted_at > ^after_timestamp
   end
 
   def with_messages(query) do

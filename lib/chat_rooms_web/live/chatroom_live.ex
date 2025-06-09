@@ -79,10 +79,24 @@ defmodule ChatRoomsWeb.ChatroomLive do
     |> assign(:last_room_timestamp, rooms |> get_last_room_timestamp())
   end
 
+  defp append_rooms(socket, past_timestamp) do
+    case Chatrooms.list_rooms(past_timestamp) do
+      [] ->
+        socket |> put_flash(:error, "There are no more rooms!")
+
+      rooms ->
+        IO.inspect(rooms)
+
+        socket
+        |> stream(:rooms, rooms, at: -1)
+        |> assign(:last_room_timestamp, rooms |> get_last_room_timestamp())
+    end
+  end
+
   defp get_last_room_timestamp([]), do: DateTime.utc_now()
 
   defp get_last_room_timestamp(rooms_list),
-    do: rooms_list |> List.first() |> Map.get(:inserted_at)
+    do: rooms_list |> List.last() |> Map.get(:inserted_at) |> IO.inspect()
 
   defp stream_messages(socket, room_id) do
     messages = Chatrooms.list_messages_from_room(room_id)
@@ -182,7 +196,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
         _params,
         %{assigns: %{last_room_timestamp: last_room_timestamp}} = socket
       ) do
-    {:noreply, socket}
+    {:noreply, socket |> append_rooms(last_room_timestamp)}
   end
 
   ######################################
@@ -205,6 +219,15 @@ defmodule ChatRoomsWeb.ChatroomLive do
 
   defp maybe_update_message_stream(socket, _msg), do: socket
 
+  defp maybe_update_room_stream(
+         %{assigns: %{last_room_timestamp: last_room_timestamp}} = socket,
+         room
+       )
+       when last_room_timestamp >= room.inserted_at,
+       do: socket |> stream_insert(:rooms, room)
+
+  defp maybe_update_room_stream(socket, _msg), do: socket
+
   defp redirect_room_upon_deleting(%{assigns: %{room: room}} = socket, deleted_room)
        when room.id == deleted_room.id do
     socket
@@ -215,7 +238,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
   defp redirect_room_upon_deleting(socket, _deleted_room), do: socket
   # Room handling
   def handle_info({:room_created, room}, socket) do
-    {:noreply, socket |> stream_insert(:rooms, room, at: 0)}
+    {:noreply, socket |> stream_insert(:rooms, room, at: -1)}
   end
 
   def handle_info({:room_deleted, deleted_room}, socket) do
@@ -229,7 +252,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
     {:noreply,
      socket
      |> update_active_room_upon_edit(updated_room)
-     |> stream_insert(:rooms, updated_room)}
+     |> maybe_update_room_stream(updated_room)}
   end
 
   # message handling

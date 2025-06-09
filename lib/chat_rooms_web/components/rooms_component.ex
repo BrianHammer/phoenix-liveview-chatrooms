@@ -131,7 +131,10 @@ defmodule ChatRoomsWeb.RoomsComponent do
             <%= for {dom_id, room} <- @rooms_stream do %>
               <.room_button myself={@myself} room={room} id={dom_id} />
             <% end %>
-            <.button :if={length(@rooms_stream.inserts) >= 15} phx-click="load-older-rooms">
+            <.button
+              :if={@rooms_stream.inserts |> length() >= Chatrooms.get_query_limit()}
+              phx-click="load-older-rooms"
+            >
               Load more rooms...
             </.button>
           </ul>
