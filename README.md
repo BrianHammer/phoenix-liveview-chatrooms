@@ -478,7 +478,11 @@ Users can join via invite links similar to Discord. This record would be associa
 
 ## Other Tutorials
 
+
+
 ## Contacts
+
+Email: Brianhammer4work@gmail.com
 
 ## Credits
 
