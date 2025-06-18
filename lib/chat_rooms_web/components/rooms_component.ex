@@ -65,6 +65,7 @@ defmodule ChatRoomsWeb.RoomsComponent do
     >
       <input type="hidden" name="room_id" value={@room.id} />
       <input
+        autocomplete="off"
         type="text"
         name="name"
         value={@room.name}

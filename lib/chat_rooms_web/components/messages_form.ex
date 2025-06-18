@@ -45,6 +45,7 @@ defmodule ChatRoomsWeb.MessagesForm do
               phx-debounce="750"
               autofocus
               placeholder="Username"
+              autocomplete="off"
               class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:username].errors != [], do: "border-red-500 border-2 focus:border-red-500"}"}
             />
             <span class="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400">
@@ -69,6 +70,7 @@ defmodule ChatRoomsWeb.MessagesForm do
               placeholder="Type your message here..."
               phx-debounce="750"
               phx-hook="TypingIndicator"
+              autocomplete="off"
               data-room-id={@room_id}
               id={"messages-form-#{@room_id}"}
               class={"flex w-full border rounded-xl focus:outline-none pl-4 h-10 bg-gray-600 text-gray-200 placeholder-gray-400 #{if @form[:text].errors != [], do: "border-red-500 focus:border-red-500"}"}
@@ -105,6 +107,7 @@ defmodule ChatRoomsWeb.MessagesForm do
     <div>
       <.form for={@form} id="messages-form" phx-submit="message-submit" phx-target={@myself}>
         <.input
+          autocomplete="off"
           label="Username"
           field={@form[:username]}
           type="text"
@@ -114,6 +117,7 @@ defmodule ChatRoomsWeb.MessagesForm do
         />
 
         <.input
+          autocomplete="off"
           label="Message"
           field={@form[:text]}
           type="text"
@@ -129,7 +133,6 @@ defmodule ChatRoomsWeb.MessagesForm do
     </div>
     """
   end
-
 
   defp set_is_texting(socket, _msg1, _msg2), do: socket
 

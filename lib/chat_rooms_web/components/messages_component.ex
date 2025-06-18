@@ -115,6 +115,7 @@ defmodule ChatRoomsWeb.MessagesComponent do
       <input type="hidden" name="room_id" value={@message.room_id} />
       <input type="hidden" name="message_id" value={@message.id} />
       <input
+        autocomplete="off"
         type="text"
         name="text"
         value={@message.text}

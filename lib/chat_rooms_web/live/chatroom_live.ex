@@ -118,7 +118,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
     end
   end
 
-  defp get_last_message_timestamp([]), do: DateTime.utc_now()
+  defp get_last_message_timestamp([]), do: nil
 
   defp get_last_message_timestamp(message_list),
     do: message_list |> List.first() |> Map.get(:inserted_at)
@@ -214,7 +214,7 @@ defmodule ChatRoomsWeb.ChatroomLive do
          %{assigns: %{last_message_timestamp: last_message_timestamp}} = socket,
          message
        )
-       when last_message_timestamp <= message.inserted_at,
+       when is_nil(last_message_timestamp) or last_message_timestamp <= message.inserted_at,
        do: socket |> stream_insert(:messages, message)
 
   defp maybe_update_message_stream(socket, _msg), do: socket

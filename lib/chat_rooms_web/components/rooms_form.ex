@@ -29,6 +29,7 @@ defmodule ChatRoomsWeb.RoomsForm do
       >
         <div class="flex-grow relative w-full">
           <input
+            autocomplete="off"
             type="text"
             name={@form[:name].name}
             id={@form[:name].id}
